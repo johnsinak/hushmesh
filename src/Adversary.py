@@ -1,3 +1,4 @@
 class Adversary:
-    def __init__(self) -> None:
-        pass
+    def __init__(self, id) -> None:
+        self.id = id
+        self.contacts = []
