@@ -1,4 +1,4 @@
-from MeshSim import MeshSim
+from meshSim import MeshSim
 from settings import *
 
 if __name__ == "__main__":
@@ -11,5 +11,6 @@ if __name__ == "__main__":
         ADVERSARY_RATIO,
         WS_DELTA,
         WS_BETA,
+        USER_ACT_PROBABILITY
     )
     sim.run()
