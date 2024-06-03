@@ -3,9 +3,12 @@ from random import random, randint
 from networkx import watts_strogatz_graph
 from networkx.classes.graph import Graph
 import matplotlib.pyplot as plt
-import networkx
+from tqdm import tqdm
+import datetime
 
 from user import User
+from message import Message
+import data_holder
 
 
 class MeshSim:
@@ -38,11 +41,12 @@ class MeshSim:
         self._initialize()
 
         logger.info("starting simualtion")
-        for step in range(self.duration):
-            self._step_forward()
+        for step in tqdm(range(self.duration)):
+            self._step_forward(step)
         logger.info("simulation done. Plotting plots")
 
         self._plot()
+        logger.info("plotting done. GG")
 
     def _initialize(self) -> None:
         for i in range(self.number_of_users):
@@ -50,9 +54,10 @@ class MeshSim:
             # Map to help with the exchange
             self.user_map[user_location[0]][user_location[1]].append(i)
             if random() < self.adversary_ratio:
-                self.users[i] = self._spawn_user(i, user_location, is_adversary=True)
+                self.users[i] = self._spawn_user(i, user_location, self.world_dimension, is_adversary=True)
+                data_holder.adversary_count += 1
             else:
-                self.users[i] = self._spawn_user(i, user_location)
+                self.users[i] = self._spawn_user(i, user_location, self.world_dimension)
 
         graph = self._create_social_graph()
         self._update_users_based_on_graph(graph)
@@ -68,19 +73,19 @@ class MeshSim:
             contacts = list(graph[i].keys())
             self.users[i].extend_contacts(contacts)
 
-    def _step_forward(self) -> None:
-        self._exchange_messages()
-        self._generate_messages()
-        self._users_act()
+    def _step_forward(self, step) -> None:
+        self._exchange_messages(step)
+        self._generate_messages(step)
+        self._users_act(step)
         self._users_move()
     
-    def _exchange_messages(self) -> None:
+    def _exchange_messages(self, step) -> None:
         for x in range(self.world_dimension[0]):
             for y in range(self.world_dimension[1]):
                 location = (x,y)
-                self._exchange_messages_in_location(location)
+                self._exchange_messages_in_location(location, step)
 
-    def _exchange_messages_in_location(self, location):
+    def _exchange_messages_in_location(self, location, step):
         aggregate_messages = {}
         user_ids_in_location = self.user_map[location[0], location[1]]
         for id in user_ids_in_location:
@@ -91,19 +96,21 @@ class MeshSim:
                 else:
                     old_mesasge = aggregate_messages[message.id]
                     for voter_id in message.votes.keys():
-                        old_mesasge.votes[voter_id] = message.votes[voter_id]
-        
-        for id in user_ids_in_location:
-            self.users[id].message_storage = list(aggregate_messages.values())
-    
-    def _generate_messages(self) -> None:
-        for i in range(self.number_of_users):
-            self.users[i].generate_message()
+                        if old_mesasge.get(voter_id, -5) == -5:
+                            old_mesasge.votes[voter_id] = message.votes[voter_id]
+                            data_holder.votes_exchanged_steps[step] += 1
 
-    def _users_act(self) -> None:
+        for id in user_ids_in_location:
+            self.users[id].add_messages(list(aggregate_messages.values()), step)
+    
+    def _generate_messages(self, step) -> None:
+        for i in range(self.number_of_users):
+            self.users[i].generate_message(step)
+
+    def _users_act(self, step) -> None:
         for id in range(self.number_of_users):
             if random() < self.user_act_probability:
-                self.users[id].act()
+                self.users[id].act(step)
 
     def _users_move(self) -> None:
         for i in range(self.number_of_users):
@@ -115,5 +122,63 @@ class MeshSim:
                 self.user_map[new_location[0]][new_location[1]].append(i)
 
     def _plot(self) -> None:
-        # TODO
-        pass
+        now = datetime.datetime.now()
+        formatted_datetime = now.strftime("%Y-%m-%d_%H-%M-%S")
+        contactlist_sizes = []
+        for user in self.users:
+            contactlist_sizes.append(len(user.contacts))
+        # print()
+        with open(f'results_{formatted_datetime}.txt', 'w') as f:
+            f.write(f'===== test information =====\nusers: {self.number_of_users}   adversaries: {data_holder.adversary_count}\n')
+            f.write(f'total owts created: {data_holder.total_owt_created}    total owts responded to: {data_holder.total_owts_responded_to}\n')
+            f.write(f'total number of messages sent (mis or not): {Message.ID_COUNTER - data_holder.total_owt_created}\n')
+            f.write(f'average number of messages per step: {sum(data_holder.messages_exchanged_steps)/len(data_holder.messages_exchanged_steps)}\n')
+            f.write(f'average number of votes per step: {sum(data_holder.votes_exchanged_steps)/len(data_holder.votes_exchanged_steps)}\n')
+
+            f.write(f'===== average message propagation times (in steps) =====\n')
+            if len(data_holder.message_propagation_times_80_percentile) == 0:
+                f.write('no message reached 80th. This is bad!\n')
+            else:
+                f.write(f'80th: {sum(data_holder.message_propagation_times_80_percentile)/ len(data_holder.message_propagation_times_80_percentile)}     ')
+            if len(data_holder.message_propagation_times_90_percentile) == 0:
+                f.write('no message reached 90th. This is bad!\n')
+            else:
+                f.write(f'90th: {sum(data_holder.message_propagation_times_90_percentile)/ len(data_holder.message_propagation_times_90_percentile)}     ')
+            if len(data_holder.message_propagation_times_full) == 0:
+                f.write('no message reached 100%. makes sense.\n')
+            else:
+                f.write(f'full: {sum(data_holder.message_propagation_times_full)/ len(data_holder.message_propagation_times_full)}')
+            
+            f.write('========= misinformation data =========\n')
+            f.write(f'total misinformation messages spread: {sum(data_holder.misinformation_count)}\n')
+            f.write(f'total upvotes on misinformation messages: {sum(data_holder.upvoted_misinformation_count)}')
+            f.write(f'total downvotes on misinformation messages: {sum(data_holder.downvoted_misinformation_count)}')
+
+        with open(f'bulk_data_result_{formatted_datetime}.txt', 'w') as f:
+            f.write(','.join(list(map(str, data_holder.misinformation_count))))
+            f.write('\n')
+
+            f.write(','.join(list(map(str, data_holder.upvoted_misinformation_count))))
+            f.write('\n')
+
+            f.write(','.join(list(map(str, data_holder.downvoted_misinformation_count))))
+            f.write('\n')
+
+            f.write(','.join(list(map(str, data_holder.messages_exchanged_steps))))
+            f.write('\n')
+
+            f.write(','.join(list(map(str, data_holder.votes_exchanged_steps))))
+            f.write('\n')
+
+            f.write(','.join(list(map(str, data_holder.message_propagation_times_80_percentile))))
+            f.write('\n')
+
+            f.write(','.join(list(map(str, data_holder.message_propagation_times_90_percentile))))
+            f.write('\n')
+
+            f.write(','.join(list(map(str, data_holder.message_propagation_times_full))))
+            f.write('\n')
+
+
+
+
