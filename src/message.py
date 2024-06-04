@@ -1,5 +1,5 @@
 from settings import *
-
+import data_holder
 
 class Message:
     ID_COUNTER = 0
@@ -9,6 +9,8 @@ class Message:
         Message.ID_COUNTER += 1
         self.author = author
         self.seen_by = {self.author: True}
+        data_holder.message_seen_counter[self.id] = set()
+        data_holder.message_seen_counter[self.id].add(self.author)
         self.percentile_80 = False
         self.percentile_90 = False
         self.percentile_full = False
