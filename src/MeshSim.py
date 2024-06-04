@@ -87,16 +87,17 @@ class MeshSim:
 
     def _exchange_messages_in_location(self, location, step):
         aggregate_messages = {}
-        user_ids_in_location = self.user_map[location[0], location[1]]
+        user_ids_in_location = self.user_map[location[0]][location[1]]
         for id in user_ids_in_location:
             user = self.users[id]
             for message in user.message_storage:
-                if not aggregate_messages.get(message.id, None):
+                if message.ttl <= 0: continue
+                if message.id not in aggregate_messages:
                     aggregate_messages[message.id] = message
                 else:
                     old_mesasge = aggregate_messages[message.id]
                     for voter_id in message.votes.keys():
-                        if old_mesasge.get(voter_id, -5) == -5:
+                        if voter_id not in old_mesasge.votes:
                             old_mesasge.votes[voter_id] = message.votes[voter_id]
                             data_holder.votes_exchanged_steps[step] += 1
 
@@ -125,36 +126,89 @@ class MeshSim:
         now = datetime.datetime.now()
         formatted_datetime = now.strftime("%Y-%m-%d_%H-%M-%S")
         contactlist_sizes = []
-        for user in self.users:
-            contactlist_sizes.append(len(user.contacts))
-        # print()
-        with open(f'results_{formatted_datetime}.txt', 'w') as f:
-            f.write(f'===== test information =====\nusers: {self.number_of_users}   adversaries: {data_holder.adversary_count}\n')
-            f.write(f'total owts created: {data_holder.total_owt_created}    total owts responded to: {data_holder.total_owts_responded_to}\n')
-            f.write(f'total number of messages sent (mis or not): {Message.ID_COUNTER - data_holder.total_owt_created}\n')
-            f.write(f'average number of messages per step: {sum(data_holder.messages_exchanged_steps)/len(data_holder.messages_exchanged_steps)}\n')
-            f.write(f'average number of votes per step: {sum(data_holder.votes_exchanged_steps)/len(data_holder.votes_exchanged_steps)}\n')
-
-            f.write(f'===== average message propagation times (in steps) =====\n')
-            if len(data_holder.message_propagation_times_80_percentile) == 0:
-                f.write('no message reached 80th. This is bad!\n')
-            else:
-                f.write(f'80th: {sum(data_holder.message_propagation_times_80_percentile)/ len(data_holder.message_propagation_times_80_percentile)}     ')
-            if len(data_holder.message_propagation_times_90_percentile) == 0:
-                f.write('no message reached 90th. This is bad!\n')
-            else:
-                f.write(f'90th: {sum(data_holder.message_propagation_times_90_percentile)/ len(data_holder.message_propagation_times_90_percentile)}     ')
-            if len(data_holder.message_propagation_times_full) == 0:
-                f.write('no message reached 100%. makes sense.\n')
-            else:
-                f.write(f'full: {sum(data_holder.message_propagation_times_full)/ len(data_holder.message_propagation_times_full)}')
+        message_storage_sizes = []
+        for user_id in self.users:
+            contactlist_sizes.append(len(self.users[user_id].contacts))
+            message_storage_sizes.append(len(self.users[user_id].message_storage))
             
-            f.write('========= misinformation data =========\n')
-            f.write(f'total misinformation messages spread: {sum(data_holder.misinformation_count)}\n')
-            f.write(f'total upvotes on misinformation messages: {sum(data_holder.upvoted_misinformation_count)}')
-            f.write(f'total downvotes on misinformation messages: {sum(data_holder.downvoted_misinformation_count)}')
+        # print()
+        with open(f'results/results_{formatted_datetime}.txt', 'w') as f:
+            txt_write_to_file = ''
+            txt_write_to_file += f'===== test information =====\nusers: {self.number_of_users}   adversaries: {data_holder.adversary_count}\n'
+            txt_write_to_file += f'total owts created: {data_holder.total_owt_created}    total owts responded to: {data_holder.total_owts_responded_to}\n'
+            txt_write_to_file += f'total number of messages sent (mis or not): {Message.ID_COUNTER - data_holder.total_owt_created}\n'
+            txt_write_to_file += f'average number of messages per step: {sum(data_holder.messages_exchanged_steps)/len(data_holder.messages_exchanged_steps)}\n'
+            txt_write_to_file += f'average number of votes per step: {sum(data_holder.votes_exchanged_steps)/len(data_holder.votes_exchanged_steps)}\n'
+            txt_write_to_file += f'average contact list sizes: {sum(contactlist_sizes)/len(contactlist_sizes)}\n'
+            txt_write_to_file += f'average message storage sizes: {sum(message_storage_sizes)/len(message_storage_sizes)}\n'
 
-        with open(f'bulk_data_result_{formatted_datetime}.txt', 'w') as f:
+            txt_write_to_file += f'===== average message propagation times (in steps) =====\n'
+            txt_write_to_file += f'highest percentile reached: {data_holder.highest_percentile_reached_for_message}\n'
+            if len(data_holder.message_propagation_times_80_percentile) == 0:
+                txt_write_to_file += 'no message reached 80th. This is bad!\n'
+            else:
+                txt_write_to_file += f'80th: {sum(data_holder.message_propagation_times_80_percentile)/ len(data_holder.message_propagation_times_80_percentile)}     '
+            if len(data_holder.message_propagation_times_90_percentile) == 0:
+                txt_write_to_file += 'no message reached 90th. This is bad!\n'
+            else:
+                txt_write_to_file += f'90th: {sum(data_holder.message_propagation_times_90_percentile)/ len(data_holder.message_propagation_times_90_percentile)}     '
+            if len(data_holder.message_propagation_times_full) == 0:
+                txt_write_to_file += 'no message reached 100%. makes sense.\n'
+            else:
+                txt_write_to_file += f'full: {sum(data_holder.message_propagation_times_full)/ len(data_holder.message_propagation_times_full)}'
+            txt_write_to_file += '\n'
+
+            txt_write_to_file += '========= misinformation data =========\n'
+            txt_write_to_file += f'total misinformation messages spread: {sum(data_holder.misinformation_count)}\n'
+            txt_write_to_file += f'total upvotes on misinformation messages: {sum(data_holder.upvoted_misinformation_count)}\n'
+            txt_write_to_file += f'total downvotes on misinformation messages: {sum(data_holder.downvoted_misinformation_count)}'
+
+            print(txt_write_to_file)
+            f.write(txt_write_to_file)
+            
+            # message_locations = []
+            # user_locations = []
+            # for user in self.users:
+            #     user_locations.append(self.users[user].location)
+            #     for message in self.users[user].message_storage:
+            #         if message.id == 1:
+            #             message_locations.append(self.users[user].location)
+            
+            # x_coords1, y_coords1 = zip(*message_locations)
+            # x_coords2, y_coords2 = zip(*user_locations)
+
+            # # Create a figure and axis
+            # fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 7))
+
+            # # Plot the first set of points
+            # ax1.scatter(x_coords1, y_coords1, color='blue')
+            # ax1.set_xlim(0, 7)
+            # ax1.set_ylim(0, 7)
+            # ax1.set_xticks(range(8))
+            # ax1.set_yticks(range(8))
+            # ax1.grid(True)
+            # ax1.set_xlabel('X-axis')
+            # ax1.set_ylabel('Y-axis')
+            # ax1.set_title('Scatter Plot 1')
+
+            # # Plot the second set of points
+            # ax2.scatter(x_coords2, y_coords2, color='red')
+            # ax2.set_xlim(0, 7)
+            # ax2.set_ylim(0, 7)
+            # ax2.set_xticks(range(8))
+            # ax2.set_yticks(range(8))
+            # ax2.grid(True)
+            # ax2.set_xlabel('X-axis')
+            # ax2.set_ylabel('Y-axis')
+            # ax2.set_title('Scatter Plot 2')
+
+            # # Adjust layout to prevent overlap
+            # plt.tight_layout()
+            # plt.show()
+            # # Set the limits of the plot to create a 7x7 grid
+            
+
+        with open(f'bulks/bulk_data_result_{formatted_datetime}.txt', 'w') as f:
             f.write(','.join(list(map(str, data_holder.misinformation_count))))
             f.write('\n')
 
