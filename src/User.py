@@ -39,17 +39,21 @@ class User:
                 message_copy = copy.deepcopy(message)
                 message_copy.decrease_ttl()
                 message_copy.seen_by[self.id] = True
+                data_holder.message_seen_counter[message_copy.id].add(self.id)
                 self._check_for_percentiles(message_copy, step)
                 self.message_storage.append(message_copy)
 
     def _check_for_percentiles(self, message, step):
-        if (len(message.seen_by) / N) > 0.8 and not message.percentile_80:
+        if len(data_holder.message_seen_counter[message.id]) / N > data_holder.highest_percentile_reached_for_message:
+            data_holder.highest_percentile_reached_for_message = len(data_holder.message_seen_counter[message.id]) / N
+
+        if (len(data_holder.message_seen_counter[message.id]) / N) > 0.8 and not message.percentile_80:
             data_holder.message_propagation_times_80_percentile.append(step - message.created_at)
             message.percentile_80 = True
-        elif (len(message.seen_by) / N) > 0.9 and not message.percentile_90:
+        elif (len(data_holder.message_seen_counter[message.id]) / N) > 0.9 and not message.percentile_90:
             data_holder.message_propagation_times_90_percentile.append(step - message.created_at)
             message.percentile_90 = True
-        elif (len(message.seen_by) / N) == 1 and not message.percentile_full:
+        elif (len(data_holder.message_seen_counter[message.id]) / N) >= 0.999 and not message.percentile_full:
             data_holder.message_propagation_times_full.append(step - message.created_at)
             message.percentile_full = True
 
@@ -63,9 +67,8 @@ class User:
     def move(self, move_range):
         # Random move value within move_range
         move_value = (randint(move_range[0][0], move_range[0][1]), randint(move_range[1][0], move_range[1][1]))
-        print(f'move val: {move_value}')
         # This line bounds the new location to the boundries of the map
-        self.location = (max(min(self.location[0] + move_value[0], self.world_dimension[0]), 0), max(min(self.location[1] + move_value[1], self.world_dimension[1]), 0))
+        self.location = (max(min(self.location[0] + move_value[0], self.world_dimension[0] - 1), 0), max(min(self.location[1] + move_value[1], self.world_dimension[1] - 1), 0))
 
     def act(self, step):
         if self.is_adversary:
@@ -138,14 +141,20 @@ class User:
                         message.votes[self.id] = DOWNVOTE
                         voted = -1
                 elif random() < USER_VOTING_ON_UNKNOWN_MESSAGES_RATE: # voting on unknown messages
-                    trust_value = unknown_upvoters - unknown_downvoters
-                    # TODO: maybe add resiliance to misinformation here
-                    if trust_value >= 0:
-                        message.votes[self.id] = UPVOTE
-                        voted = 1
+                    if message.is_misinformation:
+                        if random() < USER_UPVOTING_ON_MISINFORMATION_RATE:
+                            message.votes[self.id] = UPVOTE
+                            voted = 1
+                        else:
+                            message.votes[self.id] = DOWNVOTE
+                            voted = -1
                     else:
-                        message.votes[self.id] = DOWNVOTE
-                        voted = -1
+                        if random() < 0.5:
+                            message.votes[self.id] = UPVOTE
+                            voted = 1
+                        else:
+                            message.votes[self.id] = DOWNVOTE
+                            voted = -1
                         
                 if message.is_misinformation and voted == 1:
                     data_holder.upvoted_misinformation_count[step] += 1
@@ -181,4 +190,6 @@ class User:
 
     def _delete_extra_messages(self, step):
         # TODO
+        # if len(self.message_storage) > MESSAGE_STORAGE_SIZE:
+        # if len(self.created_at) > ...: if too old, discard (maybe 20 steps)
         pass
