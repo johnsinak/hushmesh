@@ -10,7 +10,7 @@ MESSAGE_EXCHANGE_RANGE = ((-d, d), (-d, d))
 ADVERSARY_RATIO = 0.02 # TODO: new
 
 # TODO: new
-JAMMING_ATTACK = False
+JAMMING_ATTACK = True
 
 # Watts-Strogatz model parameters
 WS_DELTA = 15
@@ -19,7 +19,7 @@ WS_BETA = 0.5
 
 # User settings
 MESSAGE_STORAGE_SIZE = 2000 # TODO: new
-MAX_VOTES_ALLOWED_ON_MESSAGE = 10000 # 1.5 GB
+MAX_VOTES_ALLOWED_ON_MESSAGE = 10000 # 2 GB
 
 # (10000 + 10000)
 # 1000 rest 
@@ -31,10 +31,10 @@ USER_MESSAGE_CREATION_RATE = 0.05 # Fixed
 USER_ACT_PROBABILITY = 0.15 # Fixed Write all the reasoning
 
 OWT_MIN_TRUST_VALUE = 4 # [[[[[[[Code]]]]]]] Fixed Change to ratio, for the scale: i.e 1000UP 995 D should not be trusted
-OWT_MIN_UP_RATIO = 0.6 #60 percent upvotes
+OWT_MIN_UP_RATIO = 0.66 #60 percent upvotes
 # 10 UP - 6 D
-UPVOTE_MIN_TRUST_VALUE = 2 # Fixed
-UPVOTE_MIN_UP_RATIO = 0.6 # FIXED
+UPVOTE_MIN_TRUST_VALUE = 2 # Fixed # TODO: new
+UPVOTE_MIN_UP_RATIO = 0.55 # FIXED # TODO: new
 
 ADVERSARY_FRIEND_REDUCTION = 0.4 # Tweakable
 USER_VOTING_ON_UNKNOWN_MESSAGES_RATE = 0.05 # Tweakable Important param
