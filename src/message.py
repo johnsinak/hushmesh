@@ -15,6 +15,7 @@ class Message:
         self.percentile_90 = False
         self.percentile_full = False
         self.created_at = step
+        self.received_at = -1
         self.votes = {} # True for upvotes and False for downvotes
         self.ttl = MIN_TTL
         self.is_owt = is_owt
