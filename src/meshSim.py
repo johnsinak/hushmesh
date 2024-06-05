@@ -10,7 +10,7 @@ import os
 from user import User
 from message import Message
 import data_holder
-from settings import UPVOTE, DOWNVOTE
+from settings import UPVOTE, DOWNVOTE, JAMMING_ATTACK
 
 
 class MeshSim:
@@ -92,6 +92,8 @@ class MeshSim:
         user_ids_in_location = self.user_map[location[0]][location[1]]
         for id in user_ids_in_location:
             user = self.users[id]
+            if JAMMING_ATTACK and user.is_adversary:
+                continue
             for message in user.message_storage:
                 if message.ttl <= 0: continue
                 if message.id not in aggregate_messages:
@@ -176,6 +178,10 @@ class MeshSim:
         with open(f'results/results_{formatted_datetime}.txt', 'w') as f:
             txt_write_to_file = ''
             txt_write_to_file += f'===== test information =====\nusers: {self.number_of_users}   adversaries: {data_holder.adversary_count}   duration: {self.duration}\n'
+            if JAMMING_ATTACK:
+                txt_write_to_file += 'with jamming attack\n'
+            else:
+                txt_write_to_file += 'no jamming attack used\n'
             txt_write_to_file += f'total owts created: {data_holder.total_owt_created}    total owts responded to: {data_holder.total_owts_responded_to}\n'
             txt_write_to_file += f'total number of messages sent (mis or not): {Message.ID_COUNTER - data_holder.total_owt_created}\n'
             txt_write_to_file += f'average number of messages per step: {sum(data_holder.messages_exchanged_steps)/len(data_holder.messages_exchanged_steps)}\n'
