@@ -5,10 +5,12 @@ from networkx.classes.graph import Graph
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import datetime
+import os
 
 from user import User
 from message import Message
 import data_holder
+from settings import UPVOTE, DOWNVOTE
 
 
 class MeshSim:
@@ -121,6 +123,18 @@ class MeshSim:
             if not (old_location[0] == new_location[0] and old_location[1] == new_location[1]):
                 self.user_map[old_location[0]][old_location[1]].remove(i)
                 self.user_map[new_location[0]][new_location[1]].append(i)
+        
+    def count_upvotes_and_downvotes(self, message_id) -> tuple:
+        upvotes = 0
+        downvotes = 0
+        for vote in data_holder.message_votes_for_all_messages[message_id].values():
+            if vote == UPVOTE:
+                upvotes += 1
+            elif vote == DOWNVOTE:
+                downvotes += 1
+            else:
+                logger.error('Something is really wrong in vote counting')
+        return (upvotes, downvotes)
 
     def _plot(self) -> None:
         now = datetime.datetime.now()
@@ -130,7 +144,35 @@ class MeshSim:
         for user_id in self.users:
             contactlist_sizes.append(len(self.users[user_id].contacts))
             message_storage_sizes.append(len(self.users[user_id].message_storage))
-            
+    
+
+        majorly_trusted_ratios = [0.5, 0.55, 0.6, 0.7, 0.75, 0.8]
+        majorly_trusted_benign_messages = [0] * len(majorly_trusted_ratios)
+        majorly_untrusted_benign_messages = [0] * len(majorly_trusted_ratios)
+        majorly_trusted_misinformation_messages = [0] * len(majorly_trusted_ratios)
+        majorly_untrusted_misinformation_messages = [0] * len(majorly_trusted_ratios)
+
+        for message_id in range(len(data_holder.message_votes_for_all_messages)):
+            if len(data_holder.message_votes_for_all_messages[message_id]) == 0: continue
+            upvotes, downvotes = self.count_upvotes_and_downvotes(message_id)
+            upvote_ratio = upvotes / (downvotes + upvotes)
+            if message_id in data_holder.misinformation_messages_fast_set:
+                # misinformation handling
+                for ratio_index in range(len(majorly_trusted_ratios)):
+                    if upvote_ratio > majorly_trusted_ratios[ratio_index]:
+                        majorly_trusted_misinformation_messages[ratio_index] += 1
+                    elif 1 - upvote_ratio > majorly_trusted_ratios[ratio_index]:
+                        majorly_untrusted_misinformation_messages[ratio_index] += 1
+            else:
+                for ratio_index in range(len(majorly_trusted_ratios)):
+                    if upvote_ratio > majorly_trusted_ratios[ratio_index]:
+                        majorly_trusted_benign_messages[ratio_index] += 1
+                    elif 1 - upvote_ratio > majorly_trusted_ratios[ratio_index]:
+                        majorly_untrusted_benign_messages[ratio_index] += 1
+
+        if not os.path.exists('results/'):
+            os.makedirs('results/')
+        
         with open(f'results/results_{formatted_datetime}.txt', 'w') as f:
             txt_write_to_file = ''
             txt_write_to_file += f'===== test information =====\nusers: {self.number_of_users}   adversaries: {data_holder.adversary_count}\n'
@@ -140,6 +182,19 @@ class MeshSim:
             txt_write_to_file += f'average number of votes per step: {sum(data_holder.votes_exchanged_steps)/len(data_holder.votes_exchanged_steps)}\n'
             txt_write_to_file += f'average contact list sizes: {sum(contactlist_sizes)/len(contactlist_sizes)}\n'
             txt_write_to_file += f'average message storage sizes: {sum(message_storage_sizes)/len(message_storage_sizes)}\n'
+
+            txt_write_to_file += f'=== new ===\n'
+            txt_write_to_file += f'count of majorly trusted and untrusted messages:\n'
+            txt_write_to_file += f'ratios    : {', '.join(list(map(str, majorly_trusted_ratios)))}\n'
+            txt_write_to_file += f'tr-benign : {', '.join(list(map(str, majorly_trusted_benign_messages)))}\n'
+            txt_write_to_file += f'un-benign : {', '.join(list(map(str, majorly_untrusted_benign_messages)))}\n'
+            txt_write_to_file += f'tr-misinf : {', '.join(list(map(str, majorly_trusted_misinformation_messages)))}\n'
+            txt_write_to_file += f'un-misinf : {', '.join(list(map(str, majorly_untrusted_misinformation_messages)))}\n'
+
+            txt_write_to_file += f'\n============ OWTs info ============ \n'
+            txt_write_to_file += f'average ttl of owt when received     : {sum(data_holder.owt_ttl_when_received) / len(data_holder.owt_ttl_when_received)}'
+            txt_write_to_file += f'average delay of owt when received   : {sum(data_holder.owt_delay_when_received) / len(data_holder.owt_delay_when_received)}'
+            txt_write_to_file += f'amount of users who owted adversaries: {len(data_holder.owts_recieved_by_adversaries)}'
 
             txt_write_to_file += f'===== average message propagation times (in steps) =====\n'
             txt_write_to_file += f'highest percentile reached: {data_holder.highest_percentile_reached_for_message}\n'
@@ -206,6 +261,8 @@ class MeshSim:
             # plt.show()
             # # Set the limits of the plot to create a 7x7 grid
             
+        if not os.path.exists('bulks/'):
+            os.makedirs('bulks/')
 
         with open(f'bulks/bulk_data_result_{formatted_datetime}.txt', 'w') as f:
             f.write(','.join(list(map(str, data_holder.misinformation_count))))
@@ -232,6 +289,32 @@ class MeshSim:
             f.write(','.join(list(map(str, data_holder.message_propagation_times_full))))
             f.write('\n')
 
+            f.write(','.join(list(map(str, data_holder.owt_ttl_when_received))))
+            f.write('\n')
 
+            f.write(','.join(list(map(str, data_holder.owt_delay_when_received))))
+            f.write('\n')
+
+            f.write(','.join(list(map(str, data_holder.message_propagation_times_full))))
+            f.write('\n')
+
+            f.write(','.join(list(map(str, data_holder.message_propagation_times_full))))
+            f.write('\n')
+
+            # TODO: create a full data of misinfromation message seen bys and benign seen bys
+
+
+        if not os.path.exists('seen_bys/'):
+            os.makedirs('seen_bys/')
+
+        with open(f'seen_bys/seen_by_normal_result_{formatted_datetime}.txt', 'w') as fn:
+            with open(f'seen_bys/seen_by_misinfo_result_{formatted_datetime}.txt', 'w') as fm:
+                for message_id in data_holder.message_seen_list_holder:
+                    if message_id in data_holder.misinformation_messages_fast_set:
+                        fm.write(','.join(list(map(str, data_holder.message_seen_list_holder[message_id]))))
+                        fm.write('\n')
+                    else:
+                        fn.write(','.join(list(map(str, data_holder.message_seen_list_holder[message_id]))))
+                        fn.write('\n')
 
 

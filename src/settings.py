@@ -1,4 +1,4 @@
-T = 120 # Steps Internet blackout = 5days 5 * 24 / 120 = 1 hours
+T = 60 # Steps Internet blackout = 5days 5 * 24 / 120 = 1 hours
 N = 600 # users
 A = 25 # X
 B = 25 # Y

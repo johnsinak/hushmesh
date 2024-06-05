@@ -21,13 +21,14 @@ adversary_count = 0
 highest_percentile_reached_for_message = 0
 
 message_seen_counter = {}
+
 message_seen_list_holder = {} # NEW
 # for each message, there is a list of how many new users saw that particular message in each step
 message_votes_for_all_messages = [] # list of dictionaries of votes
-misinformation_messages_fast_set = set()
 
 # ===============
 owt_ttl_when_received = [] # NEW
 owt_delay_when_received = [] # NEW
 
 owts_recieved_by_adversaries = set()
+misinformation_messages_fast_set = set()
