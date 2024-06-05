@@ -131,7 +131,6 @@ class MeshSim:
             contactlist_sizes.append(len(self.users[user_id].contacts))
             message_storage_sizes.append(len(self.users[user_id].message_storage))
             
-        # print()
         with open(f'results/results_{formatted_datetime}.txt', 'w') as f:
             txt_write_to_file = ''
             txt_write_to_file += f'===== test information =====\nusers: {self.number_of_users}   adversaries: {data_holder.adversary_count}\n'

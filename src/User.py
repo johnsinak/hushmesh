@@ -52,7 +52,9 @@ class User:
                 message_copy.decrease_ttl()
                 message_copy.received_at = step
                 # message_copy.seen_by[self.id] = True
-                data_holder.message_seen_counter[message_copy.id].add(self.id)
+                if self.id not in data_holder.message_seen_counter[message.id]:
+                    data_holder.message_seen_counter[message_copy.id].add(self.id)
+                    data_holder.message_seen_list_holder[message_copy.id][step] += 1
                 self._check_for_percentiles(message_copy, step)
                 self.message_storage.append(message_copy)
 
@@ -90,8 +92,9 @@ class User:
             self._benign_act(step)
 
     def _adversary_act(self):
-        # TODO:
-        pass
+        for message in self.message_storage:
+            if message.is_owt and message.owt_recipient == self.id:
+                data_holder.owts_recieved_by_adversaries.add(message.author)
 
     def _benign_act(self, step):
         self._vote_on_messages(step)
@@ -106,6 +109,8 @@ class User:
                 self.inbox_owt_count += 1
                 if message.author not in self.pending_incoming_owts and message.owt_recipient == self.id and message.author not in self.contacts:
                     self.pending_incoming_owts[message.author] = 0
+                    data_holder.owt_ttl_when_received.append(message.ttl)
+                    data_holder.owt_delay_when_received.append(step - message.created_at)
 
         for message in self.message_storage:
             voting_condition_1 = not message.is_owt
@@ -145,35 +150,46 @@ class User:
                     trust_value = known_upvoters - known_downvoters
                     if trust_value >= OWT_MIN_TRUST_VALUE:
                         # People who the user does not know, and have at least the OWT_MIN_TRUST_VALUE will be owt'ed
-                        self.people_to_owt.append(message.author)
+                        if known_upvoters / (known_upvoters + known_downvoters) >= OWT_MIN_UP_RATIO:
+                            self.people_to_owt.append(message.author)
 
                     if trust_value >= UPVOTE_MIN_TRUST_VALUE: 
-                        message.votes[self.id] = UPVOTE
-                        voted = 1
+                        if known_upvoters / (known_upvoters + known_downvoters) >= UPVOTE_MIN_UP_RATIO:
+                            # message.votes[self.id] = UPVOTE
+                            # data_holder.message_votes_for_all_messages[message.id][self.id] = UPVOTE
+                            voted = self._vote_on_single_message(message, UPVOTE)
                     elif trust_value < 0:
-                        message.votes[self.id] = DOWNVOTE
-                        voted = -1
+                        # message.votes[self.id] = DOWNVOTE
+                        voted = voted = self._vote_on_single_message(message, DOWNVOTE)
                 elif random() < USER_VOTING_ON_UNKNOWN_MESSAGES_RATE: # voting on unknown messages
                     self.unknown_messages_dict[message.id] = True
                     if message.is_misinformation:
                         if random() < USER_UPVOTING_ON_MISINFORMATION_RATE:
-                            message.votes[self.id] = UPVOTE
-                            voted = 1
+                            # message.votes[self.id] = UPVOTE
+                            voted = self._vote_on_single_message(message, UPVOTE)
                         else:
-                            message.votes[self.id] = DOWNVOTE
-                            voted = -1
+                            # message.votes[self.id] = DOWNVOTE
+                            voted = self._vote_on_single_message(message, DOWNVOTE)
                     else:
-                        if random() < 0.8:
-                            message.votes[self.id] = UPVOTE
-                            voted = 1
+                        if random() < USER_UPVOTING_ON_NORMAL_RATE:
+                            # message.votes[self.id] = UPVOTE
+                            voted = self._vote_on_single_message(message, UPVOTE)
                         else:
-                            message.votes[self.id] = DOWNVOTE
-                            voted = -1
+                            # message.votes[self.id] = DOWNVOTE
+                            voted = self._vote_on_single_message(message, DOWNVOTE)
                         
                 if message.is_misinformation and voted == 1:
                     data_holder.upvoted_misinformation_count[step] += 1
                 elif message.is_misinformation and voted == -1:
                     data_holder.downvoted_misinformation_count[step] += 1
+
+    def _vote_on_single_message(self, message, votetype):
+        message.votes[self.id] = votetype
+        data_holder.message_votes_for_all_messages[message.id][self.id] = votetype
+        if votetype == UPVOTE:
+            return 1
+        else:
+            return -1
 
     def _create_the_owts(self, step):
         for owt_receiver_id in self.people_to_owt:
