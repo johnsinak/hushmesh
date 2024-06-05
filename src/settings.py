@@ -25,8 +25,9 @@ MAX_VOTES_ALLOWED_ON_MESSAGE = 10000 # 2 GB
 # 1000 rest 
 # 19000 junk | 
 # Write about this, and discuss how this affects us add to 5.2 all params
+# TODO: TTLLLLLLLLLLLLLLLLLLLl
 
-MIN_TTL = 20 # TODO: new
+MIN_TTL = T + 20 # TODO: new | essentially removes TTLs from the system
 USER_MESSAGE_CREATION_RATE = 0.05 # Fixed
 USER_ACT_PROBABILITY = 0.15 # Fixed Write all the reasoning
 

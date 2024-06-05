@@ -99,7 +99,7 @@ class MeshSim:
             for message in user.message_storage:
                 if JAMMING_ATTACK and user.is_adversary and not message.is_misinformation:
                     continue
-                if message.ttl <= 0: continue
+                # if message.ttl <= 0: continue
                 if message.id not in aggregate_messages:
                     aggregate_messages[message.id] = message
                 else:
@@ -202,7 +202,7 @@ class MeshSim:
             txt_write_to_file += f'un-misinf : {", ".join(list(map(str, majorly_untrusted_misinformation_messages)))}\n'
 
             txt_write_to_file += f'\n============ OWTs info ============ \n'
-            txt_write_to_file += f'average ttl of owt when received     : {sum(data_holder.owt_ttl_when_received) / len(data_holder.owt_ttl_when_received)}\n'
+            # txt_write_to_file += f'average ttl of owt when received     : {sum(data_holder.owt_ttl_when_received) / len(data_holder.owt_ttl_when_received)}\n'
             txt_write_to_file += f'average delay of owt when received   : {sum(data_holder.owt_delay_when_received) / len(data_holder.owt_delay_when_received)}\n'
             txt_write_to_file += f'amount of users who owted adversaries: {len(data_holder.owts_recieved_by_adversaries)}\n'
 

@@ -28,5 +28,6 @@ class Message:
         self.is_misinformation = is_misinformation
     
     def decrease_ttl(self):
-        self.ttl -= 1
+        # self.ttl -= 1
+        pass
 

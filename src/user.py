@@ -109,7 +109,7 @@ class User:
                 self.inbox_owt_count += 1
                 if message.author not in self.pending_incoming_owts and message.owt_recipient == self.id and message.author not in self.contacts:
                     self.pending_incoming_owts[message.author] = 0
-                    data_holder.owt_ttl_when_received.append(message.ttl)
+                    # data_holder.owt_ttl_when_received.append(message.ttl)
                     data_holder.owt_delay_when_received.append(step - message.created_at)
 
         for message in self.message_storage:
