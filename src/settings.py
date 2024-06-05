@@ -17,7 +17,7 @@ WS_DELTA = 15
 WS_BETA = 0.5
 
 # User settings
-MESSAGE_STORAGE_SIZE = 1500 
+MESSAGE_STORAGE_SIZE = 2000
 MAX_VOTES_ALLOWED_ON_MESSAGE = 10000 # 1.5 GB
 
 # (10000 + 10000)
@@ -25,7 +25,7 @@ MAX_VOTES_ALLOWED_ON_MESSAGE = 10000 # 1.5 GB
 # 19000 junk | 
 # Write about this, and discuss how this affects us add to 5.2 all params
 
-MIN_TTL = 15
+MIN_TTL = 20
 USER_MESSAGE_CREATION_RATE = 0.05 # Fixed
 USER_ACT_PROBABILITY = 0.15 # Fixed Write all the reasoning
 
