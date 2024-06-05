@@ -92,9 +92,9 @@ class MeshSim:
         user_ids_in_location = self.user_map[location[0]][location[1]]
         for id in user_ids_in_location:
             user = self.users[id]
-            if JAMMING_ATTACK and user.is_adversary:
-                continue
             for message in user.message_storage:
+                if JAMMING_ATTACK and user.is_adversary and not message.is_misinformation:
+                    continue
                 if message.ttl <= 0: continue
                 if message.id not in aggregate_messages:
                     aggregate_messages[message.id] = message
