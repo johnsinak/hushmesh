@@ -10,7 +10,7 @@ MESSAGE_EXCHANGE_RANGE = ((-d, d), (-d, d))
 ADVERSARY_RATIO = 0.02 # TODO: new
 
 # TODO: new
-JAMMING_ATTACK = False
+JAMMING_ATTACK = True
 
 # Watts-Strogatz model parameters
 WS_DELTA = 15
