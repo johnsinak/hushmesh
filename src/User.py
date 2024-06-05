@@ -17,9 +17,21 @@ class User:
         self.inbox_owt_count = 0
         self.pending_incoming_owts = {}
         self.outgoing_owt_dict = {}
+
+        self.unknown_messages_dict = {}
     
     def extend_contacts(self, contact_list: list) -> None:
-        for contact in contact_list:
+        if self.is_adversary:
+            self._adversary_extend_contacts(contact_list)
+        else:
+            for contact in contact_list:
+                self.contacts[contact] = True
+
+    def _adversary_extend_contacts(self, contact_list: list) -> None:
+        new_friend_count = min(len(contact_list) * ADVERSARY_FRIEND_REDUCTION, len(contact_list))
+        for i in range(len(contact_list)):
+            if i >= new_friend_count: break
+            contact = contact_list[i]
             self.contacts[contact] = True
 
     def generate_message(self, step):
@@ -38,7 +50,8 @@ class User:
                 data_holder.messages_exchanged_steps[step] += 1
                 message_copy = copy.deepcopy(message)
                 message_copy.decrease_ttl()
-                message_copy.seen_by[self.id] = True
+                message_copy.received_at = step
+                # message_copy.seen_by[self.id] = True
                 data_holder.message_seen_counter[message_copy.id].add(self.id)
                 self._check_for_percentiles(message_copy, step)
                 self.message_storage.append(message_copy)
@@ -131,16 +144,17 @@ class User:
                 elif voting_condition_2_b:
                     trust_value = known_upvoters - known_downvoters
                     if trust_value >= OWT_MIN_TRUST_VALUE:
-                        # People who the user does not knwo, and have at least the OWT_MIN_TRUST_VALUE will be owt'ed
+                        # People who the user does not know, and have at least the OWT_MIN_TRUST_VALUE will be owt'ed
                         self.people_to_owt.append(message.author)
 
-                    if trust_value >= 0: 
+                    if trust_value >= UPVOTE_MIN_TRUST_VALUE: 
                         message.votes[self.id] = UPVOTE
                         voted = 1
-                    else:
+                    elif trust_value < 0:
                         message.votes[self.id] = DOWNVOTE
                         voted = -1
                 elif random() < USER_VOTING_ON_UNKNOWN_MESSAGES_RATE: # voting on unknown messages
+                    self.unknown_messages_dict[message.id] = True
                     if message.is_misinformation:
                         if random() < USER_UPVOTING_ON_MISINFORMATION_RATE:
                             message.votes[self.id] = UPVOTE
@@ -149,7 +163,7 @@ class User:
                             message.votes[self.id] = DOWNVOTE
                             voted = -1
                     else:
-                        if random() < 0.5:
+                        if random() < 0.8:
                             message.votes[self.id] = UPVOTE
                             voted = 1
                         else:
@@ -189,7 +203,25 @@ class User:
             self.pending_incoming_owts.pop(owt)
 
     def _delete_extra_messages(self, step):
-        # TODO
-        # if len(self.message_storage) > MESSAGE_STORAGE_SIZE:
-        # if len(self.created_at) > ...: if too old, discard (maybe 20 steps)
-        pass
+        if len(self.message_storage) > MESSAGE_STORAGE_SIZE:
+            self.message_storage[:] = [message for message in self.message_storage if self._determine_if_is_recent_enough(message, step)]
+        
+        if len(self.message_storage) > MESSAGE_STORAGE_SIZE:
+            self._internal_deletion_counter = len(self.message_storage) - MESSAGE_STORAGE_SIZE
+            self.message_storage[:] = [message for message in self.message_storage if self._determine_if_is_useful(message, step)]
+        self.unknown_messages_dict.clear()
+    
+    def _determine_if_is_recent_enough(self, message, step):
+        should_be_kept = True
+        if step - message.received_at > OLD_MESSAGE_CUTOFF:
+            should_be_kept = False
+        return should_be_kept
+
+    def _determine_if_is_useful(self, message, step):
+        if self._internal_deletion_counter < 0: return True
+        should_be_kept = True
+        if message.id in self.unknown_messages_dict:
+            should_be_kept = False
+            self._internal_deletion_counter -= 1
+        
+        return should_be_kept
