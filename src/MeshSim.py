@@ -175,7 +175,7 @@ class MeshSim:
         
         with open(f'results/results_{formatted_datetime}.txt', 'w') as f:
             txt_write_to_file = ''
-            txt_write_to_file += f'===== test information =====\nusers: {self.number_of_users}   adversaries: {data_holder.adversary_count}\n'
+            txt_write_to_file += f'===== test information =====\nusers: {self.number_of_users}   adversaries: {data_holder.adversary_count}   duration: {self.duration}\n'
             txt_write_to_file += f'total owts created: {data_holder.total_owt_created}    total owts responded to: {data_holder.total_owts_responded_to}\n'
             txt_write_to_file += f'total number of messages sent (mis or not): {Message.ID_COUNTER - data_holder.total_owt_created}\n'
             txt_write_to_file += f'average number of messages per step: {sum(data_holder.messages_exchanged_steps)/len(data_holder.messages_exchanged_steps)}\n'
@@ -185,16 +185,16 @@ class MeshSim:
 
             txt_write_to_file += f'=== new ===\n'
             txt_write_to_file += f'count of majorly trusted and untrusted messages:\n'
-            txt_write_to_file += f'ratios    : {', '.join(list(map(str, majorly_trusted_ratios)))}\n'
-            txt_write_to_file += f'tr-benign : {', '.join(list(map(str, majorly_trusted_benign_messages)))}\n'
-            txt_write_to_file += f'un-benign : {', '.join(list(map(str, majorly_untrusted_benign_messages)))}\n'
-            txt_write_to_file += f'tr-misinf : {', '.join(list(map(str, majorly_trusted_misinformation_messages)))}\n'
-            txt_write_to_file += f'un-misinf : {', '.join(list(map(str, majorly_untrusted_misinformation_messages)))}\n'
+            txt_write_to_file += f'ratios    : {", ".join(list(map(str, majorly_trusted_ratios)))}\n'
+            txt_write_to_file += f'tr-benign : {", ".join(list(map(str, majorly_trusted_benign_messages)))}\n'
+            txt_write_to_file += f'un-benign : {", ".join(list(map(str, majorly_untrusted_benign_messages)))}\n'
+            txt_write_to_file += f'tr-misinf : {", ".join(list(map(str, majorly_trusted_misinformation_messages)))}\n'
+            txt_write_to_file += f'un-misinf : {", ".join(list(map(str, majorly_untrusted_misinformation_messages)))}\n'
 
             txt_write_to_file += f'\n============ OWTs info ============ \n'
-            txt_write_to_file += f'average ttl of owt when received     : {sum(data_holder.owt_ttl_when_received) / len(data_holder.owt_ttl_when_received)}'
-            txt_write_to_file += f'average delay of owt when received   : {sum(data_holder.owt_delay_when_received) / len(data_holder.owt_delay_when_received)}'
-            txt_write_to_file += f'amount of users who owted adversaries: {len(data_holder.owts_recieved_by_adversaries)}'
+            txt_write_to_file += f'average ttl of owt when received     : {sum(data_holder.owt_ttl_when_received) / len(data_holder.owt_ttl_when_received)}\n'
+            txt_write_to_file += f'average delay of owt when received   : {sum(data_holder.owt_delay_when_received) / len(data_holder.owt_delay_when_received)}\n'
+            txt_write_to_file += f'amount of users who owted adversaries: {len(data_holder.owts_recieved_by_adversaries)}\n'
 
             txt_write_to_file += f'===== average message propagation times (in steps) =====\n'
             txt_write_to_file += f'highest percentile reached: {data_holder.highest_percentile_reached_for_message}\n'
@@ -300,8 +300,6 @@ class MeshSim:
 
             f.write(','.join(list(map(str, data_holder.message_propagation_times_full))))
             f.write('\n')
-
-            # TODO: create a full data of misinfromation message seen bys and benign seen bys
 
 
         if not os.path.exists('seen_bys/'):

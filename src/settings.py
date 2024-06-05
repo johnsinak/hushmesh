@@ -1,4 +1,4 @@
-T = 60 # Steps Internet blackout = 5days 5 * 24 / 120 = 1 hours
+T = 120 # Steps Internet blackout = 5days 5 * 24 / 120 = 1 hours
 N = 600 # users
 A = 25 # X
 B = 25 # Y
@@ -8,8 +8,6 @@ MOVE_RANGE = ((-r, r), (-r, r))
 d = 1
 MESSAGE_EXCHANGE_RANGE = ((-d, d), (-d, d))
 ADVERSARY_RATIO = 0.015
-
-ADVERSARY_FRIEND_REDUCTION = 0.4 # Tweakable
 
 # Watts-Strogatz model parameters
 WS_DELTA = 15
@@ -35,8 +33,8 @@ OWT_MIN_UP_RATIO = 0.6 #60 percent upvotes
 UPVOTE_MIN_TRUST_VALUE = 2 # Fixed
 UPVOTE_MIN_UP_RATIO = 0.6 # FIXED
 
+ADVERSARY_FRIEND_REDUCTION = 0.4 # Tweakable
 USER_VOTING_ON_UNKNOWN_MESSAGES_RATE = 0.02 # Tweakable Important param
-
 USER_UPVOTING_ON_MISINFORMATION_RATE = 0.3 # Tweakable Important param
 USER_UPVOTING_ON_NORMAL_RATE = 0.6 # Tweakable Important param
 
