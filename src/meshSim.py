@@ -55,11 +55,15 @@ class MeshSim:
             user_location = (randint(0, self.world_dimension[0]) - 1, randint(0, self.world_dimension[1] - 1))
             # Map to help with the exchange
             self.user_map[user_location[0]][user_location[1]].append(i)
-            if random() < self.adversary_ratio:
+            if random() < self.adversary_ratio and data_holder.adversary_count < self.adversary_ratio * self.number_of_users:
                 self.users[i] = self._spawn_user(i, user_location, self.world_dimension, is_adversary=True)
                 data_holder.adversary_count += 1
             else:
                 self.users[i] = self._spawn_user(i, user_location, self.world_dimension)
+
+        while data_holder.adversary_count < int(self.adversary_ratio * self.number_of_users):
+            self.users[int(random() * self.number_of_users)].is_adversary = True
+            data_holder.adversary_count += 1
 
         graph = self._create_social_graph()
         self._update_users_based_on_graph(graph)
