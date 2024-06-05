@@ -7,9 +7,10 @@ r = 2
 MOVE_RANGE = ((-r, r), (-r, r))
 d = 1
 MESSAGE_EXCHANGE_RANGE = ((-d, d), (-d, d))
-ADVERSARY_RATIO = 0.015
-# TODO: removeeeeeeeeeeee
-JAMMING_ATTACK = False
+ADVERSARY_RATIO = 0.02 # TODO: new
+
+# TODO: new
+JAMMING_ATTACK = True
 
 # Watts-Strogatz model parameters
 WS_DELTA = 15
@@ -17,7 +18,7 @@ WS_DELTA = 15
 WS_BETA = 0.5
 
 # User settings
-MESSAGE_STORAGE_SIZE = 2000
+MESSAGE_STORAGE_SIZE = 2000 # TODO: new
 MAX_VOTES_ALLOWED_ON_MESSAGE = 10000 # 1.5 GB
 
 # (10000 + 10000)
@@ -25,7 +26,7 @@ MAX_VOTES_ALLOWED_ON_MESSAGE = 10000 # 1.5 GB
 # 19000 junk | 
 # Write about this, and discuss how this affects us add to 5.2 all params
 
-MIN_TTL = 20
+MIN_TTL = 20 # TODO: new
 USER_MESSAGE_CREATION_RATE = 0.05 # Fixed
 USER_ACT_PROBABILITY = 0.15 # Fixed Write all the reasoning
 
@@ -36,7 +37,7 @@ UPVOTE_MIN_TRUST_VALUE = 2 # Fixed
 UPVOTE_MIN_UP_RATIO = 0.6 # FIXED
 
 ADVERSARY_FRIEND_REDUCTION = 0.4 # Tweakable
-USER_VOTING_ON_UNKNOWN_MESSAGES_RATE = 0.02 # Tweakable Important param
+USER_VOTING_ON_UNKNOWN_MESSAGES_RATE = 0.05 # Tweakable Important param
 USER_UPVOTING_ON_MISINFORMATION_RATE = 0.3 # Tweakable Important param
 USER_UPVOTING_ON_NORMAL_RATE = 0.6 # Tweakable Important param
 
