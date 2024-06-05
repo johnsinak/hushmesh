@@ -10,7 +10,7 @@ import os
 from user import User
 from message import Message
 import data_holder
-from settings import UPVOTE, DOWNVOTE, JAMMING_ATTACK
+from settings import UPVOTE, DOWNVOTE, JAMMING_ATTACK, TEST_NAME
 
 
 class MeshSim:
@@ -181,7 +181,7 @@ class MeshSim:
         
         with open(f'results/results_{formatted_datetime}.txt', 'w') as f:
             txt_write_to_file = ''
-            txt_write_to_file += f'===== test information =====\nusers: {self.number_of_users}   adversaries: {data_holder.adversary_count}   duration: {self.duration}\n'
+            txt_write_to_file += f'===== test information =====\npreset: {TEST_NAME}\nusers: {self.number_of_users}   adversaries: {data_holder.adversary_count}   duration: {self.duration}\n'
             if JAMMING_ATTACK:
                 txt_write_to_file += 'with jamming attack\n'
             else:
