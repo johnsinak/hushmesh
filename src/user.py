@@ -62,15 +62,15 @@ class User:
         if len(data_holder.message_seen_counter[message.id]) / N > data_holder.highest_percentile_reached_for_message:
             data_holder.highest_percentile_reached_for_message = len(data_holder.message_seen_counter[message.id]) / N
 
-        if (len(data_holder.message_seen_counter[message.id]) / N) > 0.8 and not message.percentile_80:
+        if (len(data_holder.message_seen_counter[message.id]) / N) > 0.8 and message.id not in data_holder.message_80percentile_holder:
             data_holder.message_propagation_times_80_percentile.append(step - message.created_at)
-            message.percentile_80 = True
-        elif (len(data_holder.message_seen_counter[message.id]) / N) > 0.9 and not message.percentile_90:
+            data_holder.message_80percentile_holder.add(message.id)
+        elif (len(data_holder.message_seen_counter[message.id]) / N) > 0.9 and message.id not in data_holder.message_90percentile_holder:
             data_holder.message_propagation_times_90_percentile.append(step - message.created_at)
-            message.percentile_90 = True
-        elif (len(data_holder.message_seen_counter[message.id]) / N) >= 0.999 and not message.percentile_full:
+            data_holder.message_90percentile_holder.add(message.id)
+        elif (len(data_holder.message_seen_counter[message.id]) / N) >= 0.999 and message.id not in data_holder.message_fullpercentile_holder:
             data_holder.message_propagation_times_full.append(step - message.created_at)
-            message.percentile_full = True
+            data_holder.message_fullpercentile_holder.add(message.id)
 
     def generate_adversary_message(self, step):
         self.message_storage.append(Message(self.id, step, is_misinformation=True))
