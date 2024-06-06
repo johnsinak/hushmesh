@@ -45,7 +45,7 @@ UPVOTE_MIN_UP_RATIO = 0.55 # FIXED # TODO: new
 # don't know the author
 # don't know the voters
 
-OLD_MESSAGE_CUTOFF = 36
+OLD_MESSAGE_CUTOFF = 48
 # mention in both design 4.5 (how the message storage works) and  implementation 5.2
 #Add information about the owt handling (out going and incoming) and how we treat the older ones (do we use the same cutoff or not)
 
