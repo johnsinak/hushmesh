@@ -153,7 +153,7 @@ class MeshSim:
             message_storage_sizes.append(len(self.users[user_id].message_storage))
     
 
-        majorly_trusted_ratios = [0.5, 0.55, 0.6, 0.7, 0.75, 0.8]
+        majorly_trusted_ratios = [0.5, 0.55, 0.6, 0.65, 0.7,  0.75, 0.8]
         majorly_trusted_benign_messages = [0] * len(majorly_trusted_ratios)
         majorly_untrusted_benign_messages = [0] * len(majorly_trusted_ratios)
         majorly_trusted_misinformation_messages = [0] * len(majorly_trusted_ratios)
