@@ -43,6 +43,7 @@ class MeshSim:
         self._initialize()
 
         logger.info(f"starting simualtion with preset: {TEST_NAME}")
+        logger.info(f"persistence time is: {OLD_MESSAGE_CUTOFF}")
         for step in tqdm(range(self.duration)):
             self._step_forward(step)
         logger.info("simulation done. Plotting plots")
