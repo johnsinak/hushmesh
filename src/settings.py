@@ -18,16 +18,14 @@ WS_DELTA = 15
 WS_BETA = 0.5
 
 # User settings
-MESSAGE_STORAGE_SIZE = 2000 # TODO: new
-MAX_VOTES_ALLOWED_ON_MESSAGE = 10000 # 2 GB
+MESSAGE_STORAGE_SIZE = 5000 # TODO: new
+MAX_VOTES_ALLOWED_ON_MESSAGE = 600 # 3 GB
 
 # (10000 + 10000)
 # 1000 rest 
-# 19000 junk | 
-# Write about this, and discuss how this affects us add to 5.2 all params
-# TODO: TTLLLLLLLLLLLLLLLLLLLl
+# 19000 junk |
 
-MIN_TTL = T + 20 # TODO: new | essentially removes TTLs from the system
+MIN_TTL = T + 20
 USER_MESSAGE_CREATION_RATE = 0.05 # Fixed
 USER_ACT_PROBABILITY = 0.15 # Fixed Write all the reasoning
 
