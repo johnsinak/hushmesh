@@ -10,7 +10,7 @@ import os
 from user import User
 from message import Message
 import data_holder
-from settings import UPVOTE, DOWNVOTE, JAMMING_ATTACK, TEST_NAME, OLD_MESSAGE_CUTOFF
+from settings import UPVOTE, DOWNVOTE, JAMMING_ATTACK, TEST_NAME, OLD_MESSAGE_CUTOFF, ADVERSARY_RATIO
 
 
 class MeshSim:
@@ -43,6 +43,7 @@ class MeshSim:
         self._initialize()
 
         logger.info(f"starting simualtion with preset: {TEST_NAME}")
+        logger.info(f"adversary ratio is: {ADVERSARY_RATIO}")
         logger.info(f"persistence time is: {OLD_MESSAGE_CUTOFF}")
         for step in tqdm(range(self.duration)):
             self._step_forward(step)

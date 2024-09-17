@@ -7,7 +7,7 @@ r = 2
 MOVE_RANGE = ((-r, r), (-r, r))
 d = 1
 MESSAGE_EXCHANGE_RANGE = ((-d, d), (-d, d))
-ADVERSARY_RATIO = 0.02 # TODO: new
+ADVERSARY_RATIO = 0.25 # TODO: new
 
 # TODO: new
 JAMMING_ATTACK = False
@@ -43,7 +43,7 @@ UPVOTE_MIN_UP_RATIO = 0.55 # FIXED # TODO: new
 # don't know the author
 # don't know the voters
 
-OLD_MESSAGE_CUTOFF = 24
+OLD_MESSAGE_CUTOFF = 24 # hours
 # mention in both design 4.5 (how the message storage works) and  implementation 5.2
 #Add information about the owt handling (out going and incoming) and how we treat the older ones (do we use the same cutoff or not)
 
@@ -52,11 +52,6 @@ OLD_MESSAGE_CUTOFF = 24
 # Program related
 UPVOTE = True
 DOWNVOTE = False
-
-# TODO: Write the evaluation section
-# TODO: finish 4.6
-
-# DIOGO: full draft of the paper except the intro by tomorrow night
 
 TEST_NAME = "STANDARD"
 ADVERSARY_FRIEND_REDUCTION = 0.4 
