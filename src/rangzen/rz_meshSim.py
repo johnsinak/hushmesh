@@ -7,9 +7,9 @@ from tqdm import tqdm
 import datetime
 import os
 
-from user import User
-from message import Message
-import data_holder
+from rz_user import User
+from rz_message import Message
+import rz_data_holder
 from settings import UPVOTE, DOWNVOTE, JAMMING_ATTACK, TEST_NAME, OLD_MESSAGE_CUTOFF, ADVERSARY_RATIO
 
 
@@ -57,15 +57,15 @@ class MeshSim:
             user_location = (randint(0, self.world_dimension[0]) - 1, randint(0, self.world_dimension[1] - 1))
             # Map to help with the exchange
             self.user_map[user_location[0]][user_location[1]].append(i)
-            if random() < self.adversary_ratio and data_holder.adversary_count < self.adversary_ratio * self.number_of_users:
+            if random() < self.adversary_ratio and rz_data_holder.adversary_count < self.adversary_ratio * self.number_of_users:
                 self.users[i] = self._spawn_user(i, user_location, self.world_dimension, is_adversary=True)
-                data_holder.adversary_count += 1
+                rz_data_holder.adversary_count += 1
             else:
                 self.users[i] = self._spawn_user(i, user_location, self.world_dimension)
 
-        while data_holder.adversary_count < int(self.adversary_ratio * self.number_of_users):
+        while rz_data_holder.adversary_count < int(self.adversary_ratio * self.number_of_users):
             self.users[int(random() * self.number_of_users)].is_adversary = True
-            data_holder.adversary_count += 1
+            rz_data_holder.adversary_count += 1
 
         graph = self._create_social_graph()
         self._update_users_based_on_graph(graph)
@@ -109,7 +109,7 @@ class MeshSim:
                     for voter_id in message.votes.keys():
                         if voter_id not in old_mesasge.votes:
                             old_mesasge.votes[voter_id] = message.votes[voter_id]
-                            data_holder.votes_exchanged_steps[step] += 1
+                            rz_data_holder.votes_exchanged_steps[step] += 1
 
         for id in user_ids_in_location:
             self.users[id].add_messages(list(aggregate_messages.values()), step)
@@ -135,7 +135,7 @@ class MeshSim:
     def count_upvotes_and_downvotes(self, message_id) -> tuple:
         upvotes = 0
         downvotes = 0
-        for vote in data_holder.message_votes_for_all_messages[message_id].values():
+        for vote in rz_data_holder.message_votes_for_all_messages[message_id].values():
             if vote == UPVOTE:
                 upvotes += 1
             elif vote == DOWNVOTE:
@@ -160,11 +160,11 @@ class MeshSim:
         majorly_trusted_misinformation_messages = [0] * len(majorly_trusted_ratios)
         majorly_untrusted_misinformation_messages = [0] * len(majorly_trusted_ratios)
 
-        for message_id in range(len(data_holder.message_votes_for_all_messages)):
-            if len(data_holder.message_votes_for_all_messages[message_id]) == 0: continue
+        for message_id in range(len(rz_data_holder.message_votes_for_all_messages)):
+            if len(rz_data_holder.message_votes_for_all_messages[message_id]) == 0: continue
             upvotes, downvotes = self.count_upvotes_and_downvotes(message_id)
             upvote_ratio = upvotes / (downvotes + upvotes)
-            if message_id in data_holder.misinformation_messages_fast_set:
+            if message_id in rz_data_holder.misinformation_messages_fast_set:
                 # misinformation handling
                 for ratio_index in range(len(majorly_trusted_ratios)):
                     if upvote_ratio > majorly_trusted_ratios[ratio_index]:
@@ -183,16 +183,16 @@ class MeshSim:
         
         with open(f'results/results_{formatted_datetime}.txt', 'w') as f:
             txt_write_to_file = ''
-            txt_write_to_file += f'===== test information =====\npreset: {TEST_NAME}\nusers: {self.number_of_users}   adversaries: {data_holder.adversary_count}   duration: {self.duration}\n'
+            txt_write_to_file += f'===== test information =====\npreset: {TEST_NAME}\nusers: {self.number_of_users}   adversaries: {rz_data_holder.adversary_count}   duration: {self.duration}\n'
             txt_write_to_file += f'====== message persistence time: {OLD_MESSAGE_CUTOFF}\n'
             if JAMMING_ATTACK:
                 txt_write_to_file += 'with jamming attack\n'
             else:
                 txt_write_to_file += 'no jamming attack used\n'
-            txt_write_to_file += f'total owts created: {data_holder.total_owt_created}    total owts responded to: {data_holder.total_owts_responded_to}\n'
-            txt_write_to_file += f'total number of messages sent (mis or not): {Message.ID_COUNTER - data_holder.total_owt_created}\n'
-            txt_write_to_file += f'average number of messages per step: {sum(data_holder.messages_exchanged_steps)/len(data_holder.messages_exchanged_steps)}\n'
-            txt_write_to_file += f'average number of votes per step: {sum(data_holder.votes_exchanged_steps)/len(data_holder.votes_exchanged_steps)}\n'
+            txt_write_to_file += f'total owts created: {rz_data_holder.total_owt_created}    total owts responded to: {rz_data_holder.total_owts_responded_to}\n'
+            txt_write_to_file += f'total number of messages sent (mis or not): {Message.ID_COUNTER - rz_data_holder.total_owt_created}\n'
+            txt_write_to_file += f'average number of messages per step: {sum(rz_data_holder.messages_exchanged_steps)/len(rz_data_holder.messages_exchanged_steps)}\n'
+            txt_write_to_file += f'average number of votes per step: {sum(rz_data_holder.votes_exchanged_steps)/len(rz_data_holder.votes_exchanged_steps)}\n'
             txt_write_to_file += f'average contact list sizes: {sum(contactlist_sizes)/len(contactlist_sizes)}\n'
             txt_write_to_file += f'average message storage sizes: {sum(message_storage_sizes)/len(message_storage_sizes)}\n'
 
@@ -205,30 +205,30 @@ class MeshSim:
             txt_write_to_file += f'un-misinf : {", ".join(list(map(str, majorly_untrusted_misinformation_messages)))}\n'
 
             txt_write_to_file += f'\n============ OWTs info ============ \n'
-            # txt_write_to_file += f'average ttl of owt when received     : {sum(data_holder.owt_ttl_when_received) / len(data_holder.owt_ttl_when_received)}\n'
-            txt_write_to_file += f'average delay of owt when received   : {sum(data_holder.owt_delay_when_received) / len(data_holder.owt_delay_when_received)}\n'
-            txt_write_to_file += f'amount of users who owted adversaries: {len(data_holder.owts_recieved_by_adversaries)}\n'
+            # txt_write_to_file += f'average ttl of owt when received     : {sum(rz_data_holder.owt_ttl_when_received) / len(rz_data_holder.owt_ttl_when_received)}\n'
+            txt_write_to_file += f'average delay of owt when received   : {sum(rz_data_holder.owt_delay_when_received) / len(rz_data_holder.owt_delay_when_received)}\n'
+            txt_write_to_file += f'amount of users who owted adversaries: {len(rz_data_holder.owts_recieved_by_adversaries)}\n'
 
             txt_write_to_file += f'===== average message propagation times (in steps) =====\n'
-            txt_write_to_file += f'highest percentile reached: {data_holder.highest_percentile_reached_for_message}\n'
-            if len(data_holder.message_propagation_times_80_percentile) == 0:
+            txt_write_to_file += f'highest percentile reached: {rz_data_holder.highest_percentile_reached_for_message}\n'
+            if len(rz_data_holder.message_propagation_times_80_percentile) == 0:
                 txt_write_to_file += 'no message reached 80th. This is bad!\n'
             else:
-                txt_write_to_file += f'80th: {sum(data_holder.message_propagation_times_80_percentile)/ len(data_holder.message_propagation_times_80_percentile)}     '
-            if len(data_holder.message_propagation_times_90_percentile) == 0:
+                txt_write_to_file += f'80th: {sum(rz_data_holder.message_propagation_times_80_percentile)/ len(rz_data_holder.message_propagation_times_80_percentile)}     '
+            if len(rz_data_holder.message_propagation_times_90_percentile) == 0:
                 txt_write_to_file += 'no message reached 90th. This is bad!\n'
             else:
-                txt_write_to_file += f'90th: {sum(data_holder.message_propagation_times_90_percentile)/ len(data_holder.message_propagation_times_90_percentile)}     '
-            if len(data_holder.message_propagation_times_full) == 0:
+                txt_write_to_file += f'90th: {sum(rz_data_holder.message_propagation_times_90_percentile)/ len(rz_data_holder.message_propagation_times_90_percentile)}     '
+            if len(rz_data_holder.message_propagation_times_full) == 0:
                 txt_write_to_file += 'no message reached 100%. makes sense.\n'
             else:
-                txt_write_to_file += f'full: {sum(data_holder.message_propagation_times_full)/ len(data_holder.message_propagation_times_full)}'
+                txt_write_to_file += f'full: {sum(rz_data_holder.message_propagation_times_full)/ len(rz_data_holder.message_propagation_times_full)}'
             txt_write_to_file += '\n'
 
             txt_write_to_file += '========= misinformation data =========\n'
-            txt_write_to_file += f'total misinformation messages spread: {sum(data_holder.misinformation_count)}\n'
-            txt_write_to_file += f'total upvotes on misinformation messages: {sum(data_holder.upvoted_misinformation_count)}\n'
-            txt_write_to_file += f'total downvotes on misinformation messages: {sum(data_holder.downvoted_misinformation_count)}'
+            txt_write_to_file += f'total misinformation messages spread: {sum(rz_data_holder.misinformation_count)}\n'
+            txt_write_to_file += f'total upvotes on misinformation messages: {sum(rz_data_holder.upvoted_misinformation_count)}\n'
+            txt_write_to_file += f'total downvotes on misinformation messages: {sum(rz_data_holder.downvoted_misinformation_count)}'
 
             print(txt_write_to_file)
             f.write(txt_write_to_file)
@@ -237,40 +237,40 @@ class MeshSim:
             os.makedirs('bulks/')
 
         with open(f'bulks/bulk_data_result_{formatted_datetime}.txt', 'w') as f:
-            f.write(','.join(list(map(str, data_holder.misinformation_count))))
+            f.write(','.join(list(map(str, rz_data_holder.misinformation_count))))
             f.write('\n')
 
-            f.write(','.join(list(map(str, data_holder.upvoted_misinformation_count))))
+            f.write(','.join(list(map(str, rz_data_holder.upvoted_misinformation_count))))
             f.write('\n')
 
-            f.write(','.join(list(map(str, data_holder.downvoted_misinformation_count))))
+            f.write(','.join(list(map(str, rz_data_holder.downvoted_misinformation_count))))
             f.write('\n')
 
-            f.write(','.join(list(map(str, data_holder.messages_exchanged_steps))))
+            f.write(','.join(list(map(str, rz_data_holder.messages_exchanged_steps))))
             f.write('\n')
 
-            f.write(','.join(list(map(str, data_holder.votes_exchanged_steps))))
+            f.write(','.join(list(map(str, rz_data_holder.votes_exchanged_steps))))
             f.write('\n')
 
-            f.write(','.join(list(map(str, data_holder.message_propagation_times_80_percentile))))
+            f.write(','.join(list(map(str, rz_data_holder.message_propagation_times_80_percentile))))
             f.write('\n')
 
-            f.write(','.join(list(map(str, data_holder.message_propagation_times_90_percentile))))
+            f.write(','.join(list(map(str, rz_data_holder.message_propagation_times_90_percentile))))
             f.write('\n')
 
-            f.write(','.join(list(map(str, data_holder.message_propagation_times_full))))
+            f.write(','.join(list(map(str, rz_data_holder.message_propagation_times_full))))
             f.write('\n')
 
-            f.write(','.join(list(map(str, data_holder.owt_ttl_when_received))))
+            f.write(','.join(list(map(str, rz_data_holder.owt_ttl_when_received))))
             f.write('\n')
 
-            f.write(','.join(list(map(str, data_holder.owt_delay_when_received))))
+            f.write(','.join(list(map(str, rz_data_holder.owt_delay_when_received))))
             f.write('\n')
 
-            f.write(','.join(list(map(str, data_holder.message_propagation_times_full))))
+            f.write(','.join(list(map(str, rz_data_holder.message_propagation_times_full))))
             f.write('\n')
 
-            f.write(','.join(list(map(str, data_holder.message_propagation_times_full))))
+            f.write(','.join(list(map(str, rz_data_holder.message_propagation_times_full))))
             f.write('\n')
 
 
@@ -279,12 +279,12 @@ class MeshSim:
 
         with open(f'seen_bys/seen_by_normal_result_{formatted_datetime}.txt', 'w') as fn:
             with open(f'seen_bys/seen_by_misinfo_result_{formatted_datetime}.txt', 'w') as fm:
-                for message_id in data_holder.message_seen_list_holder:
-                    if message_id in data_holder.misinformation_messages_fast_set:
-                        fm.write(','.join(list(map(str, data_holder.message_seen_list_holder[message_id]))))
+                for message_id in rz_data_holder.message_seen_list_holder:
+                    if message_id in rz_data_holder.misinformation_messages_fast_set:
+                        fm.write(','.join(list(map(str, rz_data_holder.message_seen_list_holder[message_id]))))
                         fm.write('\n')
                     else:
-                        fn.write(','.join(list(map(str, data_holder.message_seen_list_holder[message_id]))))
+                        fn.write(','.join(list(map(str, rz_data_holder.message_seen_list_holder[message_id]))))
                         fn.write('\n')
 
 
