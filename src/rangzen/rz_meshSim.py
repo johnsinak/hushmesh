@@ -212,6 +212,7 @@ class MeshSim:
         count_of_majorly_seen_misinformation_messages = 0
         count_of_majorly_seen_benign_messages = 0
         average_trust_score_of_misinformation = 0
+        average_trust_score_of_benign = 0
         for message_id in range(len(rz_data_holder.message_trust_scores_for_all_messages)):
             if len(rz_data_holder.message_trust_scores_for_all_messages[message_id]) > 0.5 * self.number_of_users:
                 if message_id in rz_data_holder.misinformation_messages_fast_set:
@@ -219,7 +220,9 @@ class MeshSim:
                     average_trust_score_of_misinformation += sum(rz_data_holder.message_trust_scores_for_all_messages[message_id].values()) / len(rz_data_holder.message_trust_scores_for_all_messages[message_id])
                 else:
                     count_of_majorly_seen_benign_messages += 1
+                    average_trust_score_of_benign += sum(rz_data_holder.message_trust_scores_for_all_messages[message_id].values()) / len(rz_data_holder.message_trust_scores_for_all_messages[message_id])
         average_trust_score_of_misinformation = average_trust_score_of_misinformation / total_misinformation_count
+        average_trust_score_of_benign = average_trust_score_of_benign / (Message.ID_COUNTER - total_misinformation_count)
         ratio_of_majorly_seen_misinformation_messages = count_of_majorly_seen_misinformation_messages / total_misinformation_count
         ratio_of_majorly_seen_benign_messages = count_of_majorly_seen_benign_messages / (Message.ID_COUNTER - total_misinformation_count)
 
@@ -246,7 +249,7 @@ class MeshSim:
                 txt_write_to_file += f'=== Rangzen Specific ===\n'
                 txt_write_to_file += f'count of majorly seen misinformation messages:\n'
                 txt_write_to_file += f'misinformation (count, ratio, ts): {count_of_majorly_seen_misinformation_messages}, {ratio_of_majorly_seen_misinformation_messages}, {average_trust_score_of_misinformation}\n'
-                txt_write_to_file += f'benign (count, ratio)            : {count_of_majorly_seen_benign_messages}, {ratio_of_majorly_seen_benign_messages}\n\n'
+                txt_write_to_file += f'benign (count, ratio, tr)        : {count_of_majorly_seen_benign_messages}, {ratio_of_majorly_seen_benign_messages}, {average_trust_score_of_benign}\n\n'
 
                 txt_write_to_file += f'=== new ===\n'
                 txt_write_to_file += f'count of majorly trusted and untrusted messages:\n'
