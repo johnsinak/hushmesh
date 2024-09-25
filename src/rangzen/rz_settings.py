@@ -7,10 +7,11 @@ r = 2
 MOVE_RANGE = ((-r, r), (-r, r))
 d = 1
 MESSAGE_EXCHANGE_RANGE = ((-d, d), (-d, d))
-ADVERSARY_RATIO = 0.25 # TODO: new
+ADVERSARY_RATIO = 0.02 # TODO: new
 
 # TODO: new
 JAMMING_ATTACK = False
+RANGZEN_EPSILON = 0.01
 
 # Watts-Strogatz model parameters
 WS_DELTA = 15

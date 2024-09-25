@@ -1,4 +1,4 @@
-from settings import *
+from rz_settings import *
 import rz_data_holder
 
 class Message:
@@ -7,6 +7,7 @@ class Message:
     def __init__(self, author:int, step:int, is_misinformation:bool, is_owt=False, owt_recipient=-1) -> None:
         self.id = Message.ID_COUNTER
         rz_data_holder.message_votes_for_all_messages.append({})
+        rz_data_holder.message_trust_scores_for_all_messages.append({})
         if is_misinformation:
             rz_data_holder.misinformation_messages_fast_set.add(self.id)
         Message.ID_COUNTER += 1
@@ -21,11 +22,10 @@ class Message:
         self.percentile_full = False
         self.created_at = step
         self.received_at = -1
-        self.votes = {} # True for upvotes and False for downvotes
         self.ttl = MIN_TTL
-        self.is_owt = is_owt
-        self.owt_recipient = owt_recipient
         self.is_misinformation = is_misinformation
+        # RANGZEN UPDATE
+        self.trust_score = 1.0
     
     def decrease_ttl(self):
         # self.ttl -= 1

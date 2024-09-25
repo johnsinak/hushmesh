@@ -6,11 +6,12 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 import datetime
 import os
+import copy
 
 from rz_user import User
 from rz_message import Message
 import rz_data_holder
-from settings import UPVOTE, DOWNVOTE, JAMMING_ATTACK, TEST_NAME, OLD_MESSAGE_CUTOFF, ADVERSARY_RATIO
+from rz_settings import UPVOTE, DOWNVOTE, JAMMING_ATTACK, TEST_NAME, OLD_MESSAGE_CUTOFF, RANGZEN_EPSILON
 
 
 class MeshSim:
@@ -42,6 +43,7 @@ class MeshSim:
         logger.info("initializing...")
         self._initialize()
 
+        logger.info(f"!!!!!!!!RANGZEN VERSION!!!!!!!!")
         logger.info(f"starting simualtion with preset: {TEST_NAME}")
         logger.info(f"adversary ratio is: {self.adversary_ratio}")
         logger.info(f"persistence time is: {OLD_MESSAGE_CUTOFF}")
@@ -82,6 +84,7 @@ class MeshSim:
             self.users[i].extend_contacts(contacts)
 
     def _step_forward(self, step) -> None:
+        # TODO: HERE
         self._exchange_messages(step)
         self._generate_messages(step)
         self._users_act(step)
@@ -94,25 +97,51 @@ class MeshSim:
                 self._exchange_messages_in_location(location, step)
 
     def _exchange_messages_in_location(self, location, step):
-        aggregate_messages = {}
         user_ids_in_location = self.user_map[location[0]][location[1]]
-        for id in user_ids_in_location:
-            user = self.users[id]
-            for message in user.message_storage:
-                if JAMMING_ATTACK and user.is_adversary and not message.is_misinformation:
-                    continue
-                # if message.ttl <= 0: continue
-                if message.id not in aggregate_messages:
-                    aggregate_messages[message.id] = message
-                else:
-                    old_mesasge = aggregate_messages[message.id]
-                    for voter_id in message.votes.keys():
-                        if voter_id not in old_mesasge.votes:
-                            old_mesasge.votes[voter_id] = message.votes[voter_id]
-                            rz_data_holder.votes_exchanged_steps[step] += 1
+        for i in range(len(user_ids_in_location) - 1):
+            for j in range(i+1, len(user_ids_in_location)):
+                user_id_1 = user_ids_in_location[i]
+                user_id_2 = user_ids_in_location[j]
+                self._exchange_messages_in_location_between_two_users(user_id_1, user_id_2, step)
+                # TODO: exchange messages (calculate trust scores)
+        # aggregate_messages = {}
+        # user_ids_in_location = self.user_map[location[0]][location[1]]
+        # for id in user_ids_in_location:
+        #     user = self.users[id]
+        #     for message in user.message_storage:
+        #         if JAMMING_ATTACK and user.is_adversary and not message.is_misinformation:
+        #             continue
+        #         # if message.ttl <= 0: continue
+        #         if message.id not in aggregate_messages:
+        #             aggregate_messages[message.id] = message
+        #         else:
+        #             old_mesasge = aggregate_messages[message.id]
+        #             for voter_id in message.votes.keys():
+        #                 if voter_id not in old_mesasge.votes:
+        #                     old_mesasge.votes[voter_id] = message.votes[voter_id]
+        #                     rz_data_holder.votes_exchanged_steps[step] += 1
 
-        for id in user_ids_in_location:
-            self.users[id].add_messages(list(aggregate_messages.values()), step)
+        # for id in user_ids_in_location:
+        #     self.users[id].add_messages(list(aggregate_messages.values()), step)
+    
+
+    def _exchange_messages_in_location_between_two_users(self, user_id_1, user_id_2, step):
+        # Part 1: get the PSI
+        shared_contacts = 0
+        user_1 = self.users[user_id_1]
+        user_2 = self.users[user_id_2]
+        for contact in user_1.contacts:
+            if contact in user_2.contacts:
+                shared_contacts += 1
+        
+        # Part 2: exchange messages and update the trust scores
+        messages_to_be_sent_to_2 = copy.deepcopy(user_1.message_storage)
+        user_2_ratio_for_1 = max(RANGZEN_EPSILON, shared_contacts/len(user_2.contacts))
+        user_2.add_messages(messages_to_be_sent_to_2, user_2_ratio_for_1, step)
+        
+        messages_to_be_sent_to_1 = copy.deepcopy(user_2.message_storage)
+        user_1_ratio_for_2 = max(RANGZEN_EPSILON, shared_contacts/len(user_1.contacts))
+        user_1.add_messages(messages_to_be_sent_to_1, user_1_ratio_for_2, step)
     
     def _generate_messages(self, step) -> None:
         for i in range(self.number_of_users):
@@ -178,6 +207,20 @@ class MeshSim:
                     elif 1 - upvote_ratio > majorly_trusted_ratios[ratio_index]:
                         majorly_untrusted_benign_messages[ratio_index] += 1
 
+        total_misinformation_count = sum(rz_data_holder.misinformation_count)
+
+        count_of_majorly_seen_misinformation_messages = 0
+        count_of_majorly_seen_benign_messages = 0
+        for message_id in range(len(rz_data_holder.message_trust_scores_for_all_messages)):
+            if len(rz_data_holder.message_trust_scores_for_all_messages[message_id]) > 0.5 * self.number_of_users:
+                if message_id in rz_data_holder.misinformation_messages_fast_set:
+                    count_of_majorly_seen_misinformation_messages += 1
+                else:
+                    count_of_majorly_seen_benign_messages += 1
+        ratio_of_majorly_seen_misinformation_messages = count_of_majorly_seen_misinformation_messages / total_misinformation_count
+        ratio_of_majorly_seen_benign_messages = count_of_majorly_seen_benign_messages / (Message.ID_COUNTER - total_misinformation_count)
+
+
         if not os.path.exists('results/'):
             os.makedirs('results/')
         
@@ -195,6 +238,11 @@ class MeshSim:
             txt_write_to_file += f'average number of votes per step: {sum(rz_data_holder.votes_exchanged_steps)/len(rz_data_holder.votes_exchanged_steps)}\n'
             txt_write_to_file += f'average contact list sizes: {sum(contactlist_sizes)/len(contactlist_sizes)}\n'
             txt_write_to_file += f'average message storage sizes: {sum(message_storage_sizes)/len(message_storage_sizes)}\n'
+
+            txt_write_to_file += f'=== Rangzen Specific ===\n'
+            txt_write_to_file += f'count of majorly seen misinformation messages:\n'
+            txt_write_to_file += f'misinformation (count, ratio): {count_of_majorly_seen_misinformation_messages}, {ratio_of_majorly_seen_misinformation_messages}\n'
+            txt_write_to_file += f'benign (count, ratio)        : {count_of_majorly_seen_benign_messages}, {ratio_of_majorly_seen_benign_messages}\n\n'
 
             txt_write_to_file += f'=== new ===\n'
             txt_write_to_file += f'count of majorly trusted and untrusted messages:\n'
@@ -226,7 +274,7 @@ class MeshSim:
             txt_write_to_file += '\n'
 
             txt_write_to_file += '========= misinformation data =========\n'
-            txt_write_to_file += f'total misinformation messages spread: {sum(rz_data_holder.misinformation_count)}\n'
+            txt_write_to_file += f'total misinformation messages spread: {total_misinformation_count}\n'
             txt_write_to_file += f'total upvotes on misinformation messages: {sum(rz_data_holder.upvoted_misinformation_count)}\n'
             txt_write_to_file += f'total downvotes on misinformation messages: {sum(rz_data_holder.downvoted_misinformation_count)}'
 
