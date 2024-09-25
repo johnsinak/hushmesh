@@ -228,59 +228,61 @@ class MeshSim:
             os.makedirs('results/')
         
         with open(f'results/results_{formatted_datetime}.txt', 'w') as f:
-            txt_write_to_file = ''
-            txt_write_to_file += f'===== test information =====\npreset: {TEST_NAME}\nusers: {self.number_of_users}   adversaries: {rz_data_holder.adversary_count}   duration: {self.duration}\n'
-            txt_write_to_file += f'====== message persistence time: {OLD_MESSAGE_CUTOFF}\n'
-            if JAMMING_ATTACK:
-                txt_write_to_file += 'with jamming attack\n'
-            else:
-                txt_write_to_file += 'no jamming attack used\n'
-            txt_write_to_file += f'total owts created: {rz_data_holder.total_owt_created}    total owts responded to: {rz_data_holder.total_owts_responded_to}\n'
-            txt_write_to_file += f'total number of messages sent (mis or not): {Message.ID_COUNTER - rz_data_holder.total_owt_created}\n'
-            txt_write_to_file += f'average number of messages per step: {sum(rz_data_holder.messages_exchanged_steps)/len(rz_data_holder.messages_exchanged_steps)}\n'
-            txt_write_to_file += f'average number of votes per step: {sum(rz_data_holder.votes_exchanged_steps)/len(rz_data_holder.votes_exchanged_steps)}\n'
-            txt_write_to_file += f'average contact list sizes: {sum(contactlist_sizes)/len(contactlist_sizes)}\n'
-            txt_write_to_file += f'average message storage sizes: {sum(message_storage_sizes)/len(message_storage_sizes)}\n'
+            try:
+                txt_write_to_file = ''
+                txt_write_to_file += f'===== test information =====\npreset: {TEST_NAME}\nusers: {self.number_of_users}   adversaries: {rz_data_holder.adversary_count}   duration: {self.duration}\n'
+                txt_write_to_file += f'====== message persistence time: {OLD_MESSAGE_CUTOFF}\n'
+                if JAMMING_ATTACK:
+                    txt_write_to_file += 'with jamming attack\n'
+                else:
+                    txt_write_to_file += 'no jamming attack used\n'
+                txt_write_to_file += f'total owts created: {rz_data_holder.total_owt_created}    total owts responded to: {rz_data_holder.total_owts_responded_to}\n'
+                txt_write_to_file += f'total number of messages sent (mis or not): {Message.ID_COUNTER - rz_data_holder.total_owt_created}\n'
+                txt_write_to_file += f'average number of messages per step: {sum(rz_data_holder.messages_exchanged_steps)/len(rz_data_holder.messages_exchanged_steps)}\n'
+                # txt_write_to_file += f'average number of votes per step: {sum(rz_data_holder.votes_exchanged_steps)/len(rz_data_holder.votes_exchanged_steps)}\n'
+                txt_write_to_file += f'average contact list sizes: {sum(contactlist_sizes)/len(contactlist_sizes)}\n'
+                txt_write_to_file += f'average message storage sizes: {sum(message_storage_sizes)/len(message_storage_sizes)}\n'
 
-            txt_write_to_file += f'=== Rangzen Specific ===\n'
-            txt_write_to_file += f'count of majorly seen misinformation messages:\n'
-            txt_write_to_file += f'misinformation (count, ratio, ts): {count_of_majorly_seen_misinformation_messages}, {ratio_of_majorly_seen_misinformation_messages}, {average_trust_score_of_misinformation}\n'
-            txt_write_to_file += f'benign (count, ratio)            : {count_of_majorly_seen_benign_messages}, {ratio_of_majorly_seen_benign_messages}\n\n'
+                txt_write_to_file += f'=== Rangzen Specific ===\n'
+                txt_write_to_file += f'count of majorly seen misinformation messages:\n'
+                txt_write_to_file += f'misinformation (count, ratio, ts): {count_of_majorly_seen_misinformation_messages}, {ratio_of_majorly_seen_misinformation_messages}, {average_trust_score_of_misinformation}\n'
+                txt_write_to_file += f'benign (count, ratio)            : {count_of_majorly_seen_benign_messages}, {ratio_of_majorly_seen_benign_messages}\n\n'
 
-            txt_write_to_file += f'=== new ===\n'
-            txt_write_to_file += f'count of majorly trusted and untrusted messages:\n'
-            txt_write_to_file += f'ratios    : {", ".join(list(map(str, majorly_trusted_ratios)))}\n'
-            txt_write_to_file += f'tr-benign : {", ".join(list(map(str, majorly_trusted_benign_messages)))}\n'
-            txt_write_to_file += f'un-benign : {", ".join(list(map(str, majorly_untrusted_benign_messages)))}\n'
-            txt_write_to_file += f'tr-misinf : {", ".join(list(map(str, majorly_trusted_misinformation_messages)))}\n'
-            txt_write_to_file += f'un-misinf : {", ".join(list(map(str, majorly_untrusted_misinformation_messages)))}\n'
+                txt_write_to_file += f'=== new ===\n'
+                txt_write_to_file += f'count of majorly trusted and untrusted messages:\n'
+                txt_write_to_file += f'ratios    : {", ".join(list(map(str, majorly_trusted_ratios)))}\n'
+                txt_write_to_file += f'tr-benign : {", ".join(list(map(str, majorly_trusted_benign_messages)))}\n'
+                txt_write_to_file += f'un-benign : {", ".join(list(map(str, majorly_untrusted_benign_messages)))}\n'
+                txt_write_to_file += f'tr-misinf : {", ".join(list(map(str, majorly_trusted_misinformation_messages)))}\n'
+                txt_write_to_file += f'un-misinf : {", ".join(list(map(str, majorly_untrusted_misinformation_messages)))}\n'
 
-            txt_write_to_file += f'\n============ OWTs info ============ \n'
-            # txt_write_to_file += f'average ttl of owt when received     : {sum(rz_data_holder.owt_ttl_when_received) / len(rz_data_holder.owt_ttl_when_received)}\n'
-            txt_write_to_file += f'average delay of owt when received   : {sum(rz_data_holder.owt_delay_when_received) / len(rz_data_holder.owt_delay_when_received)}\n'
-            txt_write_to_file += f'amount of users who owted adversaries: {len(rz_data_holder.owts_recieved_by_adversaries)}\n'
+                txt_write_to_file += f'\n============ OWTs info ============ \n'
+                # txt_write_to_file += f'average ttl of owt when received     : {sum(rz_data_holder.owt_ttl_when_received) / len(rz_data_holder.owt_ttl_when_received)}\n'
+                # txt_write_to_file += f'average delay of owt when received   : {sum(rz_data_holder.owt_delay_when_received) / len(rz_data_holder.owt_delay_when_received)}\n'
+                # txt_write_to_file += f'amount of users who owted adversaries: {len(rz_data_holder.owts_recieved_by_adversaries)}\n'
 
-            txt_write_to_file += f'===== average message propagation times (in steps) =====\n'
-            txt_write_to_file += f'highest percentile reached: {rz_data_holder.highest_percentile_reached_for_message}\n'
-            if len(rz_data_holder.message_propagation_times_80_percentile) == 0:
-                txt_write_to_file += 'no message reached 80th. This is bad!\n'
-            else:
-                txt_write_to_file += f'80th: {sum(rz_data_holder.message_propagation_times_80_percentile)/ len(rz_data_holder.message_propagation_times_80_percentile)}     '
-            if len(rz_data_holder.message_propagation_times_90_percentile) == 0:
-                txt_write_to_file += 'no message reached 90th. This is bad!\n'
-            else:
-                txt_write_to_file += f'90th: {sum(rz_data_holder.message_propagation_times_90_percentile)/ len(rz_data_holder.message_propagation_times_90_percentile)}     '
-            if len(rz_data_holder.message_propagation_times_full) == 0:
-                txt_write_to_file += 'no message reached 100%. makes sense.\n'
-            else:
-                txt_write_to_file += f'full: {sum(rz_data_holder.message_propagation_times_full)/ len(rz_data_holder.message_propagation_times_full)}'
-            txt_write_to_file += '\n'
+                txt_write_to_file += f'===== average message propagation times (in steps) =====\n'
+                txt_write_to_file += f'highest percentile reached: {rz_data_holder.highest_percentile_reached_for_message}\n'
+                if len(rz_data_holder.message_propagation_times_80_percentile) == 0:
+                    txt_write_to_file += 'no message reached 80th. This is bad!\n'
+                else:
+                    txt_write_to_file += f'80th: {sum(rz_data_holder.message_propagation_times_80_percentile)/ len(rz_data_holder.message_propagation_times_80_percentile)}     '
+                if len(rz_data_holder.message_propagation_times_90_percentile) == 0:
+                    txt_write_to_file += 'no message reached 90th. This is bad!\n'
+                else:
+                    txt_write_to_file += f'90th: {sum(rz_data_holder.message_propagation_times_90_percentile)/ len(rz_data_holder.message_propagation_times_90_percentile)}     '
+                if len(rz_data_holder.message_propagation_times_full) == 0:
+                    txt_write_to_file += 'no message reached 100%. makes sense.\n'
+                else:
+                    txt_write_to_file += f'full: {sum(rz_data_holder.message_propagation_times_full)/ len(rz_data_holder.message_propagation_times_full)}'
+                txt_write_to_file += '\n'
 
-            txt_write_to_file += '========= misinformation data =========\n'
-            txt_write_to_file += f'total misinformation messages spread: {total_misinformation_count}\n'
-            txt_write_to_file += f'total upvotes on misinformation messages: {sum(rz_data_holder.upvoted_misinformation_count)}\n'
-            txt_write_to_file += f'total downvotes on misinformation messages: {sum(rz_data_holder.downvoted_misinformation_count)}'
-
+                txt_write_to_file += '========= misinformation data =========\n'
+                txt_write_to_file += f'total misinformation messages spread: {total_misinformation_count}\n'
+                txt_write_to_file += f'total upvotes on misinformation messages: {sum(rz_data_holder.upvoted_misinformation_count)}\n'
+                txt_write_to_file += f'total downvotes on misinformation messages: {sum(rz_data_holder.downvoted_misinformation_count)}'
+            except:
+                print('WARNING: some of the data might be corrupted...')
             print(txt_write_to_file)
             f.write(txt_write_to_file)
             
