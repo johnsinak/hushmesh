@@ -216,10 +216,11 @@ class MeshSim:
         majorly_untrusted_misinformation_messages = [0] * len(majorly_trusted_trust_scores)
         average_trust_score_of_misinformation = 0
         average_trust_score_of_benign = 0
+        do_once = True
         for message_id in range(len(rz_data_holder.message_trust_scores_for_all_messages)):
-            message_seen_trust_scores = rz_data_holder.message_trust_scores_for_all_messages[message_id]
+            message_seen_trust_scores = rz_data_holder.message_trust_scores_for_all_messages[message_id].values()
             if len(message_seen_trust_scores) == 0: continue
-            new_average_to_sum = sum(message_seen_trust_scores.values()) / len(message_seen_trust_scores)
+            new_average_to_sum = sum(message_seen_trust_scores) / len(message_seen_trust_scores)
             if message_id in rz_data_holder.misinformation_messages_fast_set:
                 average_trust_score_of_misinformation += new_average_to_sum
                 for ratio_index in range(len(majorly_trusted_trust_scores)):
@@ -227,10 +228,13 @@ class MeshSim:
                     for trust_score in message_seen_trust_scores:
                         if trust_score > majorly_trusted_trust_scores[ratio_index]:
                             trusted_count += 1
+                    # if do_once:
+                    #     print(trusted_count, 0.5 * self.number_of_users)
                     if trusted_count > (0.5 * self.number_of_users):
                         majorly_trusted_misinformation_messages[ratio_index] += 1
                     else:
                         majorly_untrusted_misinformation_messages[ratio_index] += 1
+                # do_once = False
             else:
                 average_trust_score_of_benign += new_average_to_sum
                 for ratio_index in range(len(majorly_trusted_trust_scores)):
