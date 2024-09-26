@@ -183,49 +183,69 @@ class MeshSim:
             message_storage_sizes.append(len(self.users[user_id].message_storage))
     
 
-        majorly_trusted_ratios = [0.5, 0.55, 0.6, 0.65, 0.7,  0.75, 0.8]
-        majorly_trusted_benign_messages = [0] * len(majorly_trusted_ratios)
-        majorly_untrusted_benign_messages = [0] * len(majorly_trusted_ratios)
-        majorly_trusted_misinformation_messages = [0] * len(majorly_trusted_ratios)
-        majorly_untrusted_misinformation_messages = [0] * len(majorly_trusted_ratios)
+        # majorly_trusted_ratios = [0.5, 0.55, 0.6, 0.65, 0.7,  0.75, 0.8]
+        # majorly_trusted_benign_messages = [0] * len(majorly_trusted_ratios)
+        # majorly_untrusted_benign_messages = [0] * len(majorly_trusted_ratios)
+        # majorly_trusted_misinformation_messages = [0] * len(majorly_trusted_ratios)
+        # majorly_untrusted_misinformation_messages = [0] * len(majorly_trusted_ratios)
 
-        for message_id in range(len(rz_data_holder.message_votes_for_all_messages)):
-            if len(rz_data_holder.message_votes_for_all_messages[message_id]) == 0: continue
-            upvotes, downvotes = self.count_upvotes_and_downvotes(message_id)
-            upvote_ratio = upvotes / (downvotes + upvotes)
-            if message_id in rz_data_holder.misinformation_messages_fast_set:
-                # misinformation handling
-                for ratio_index in range(len(majorly_trusted_ratios)):
-                    if upvote_ratio > majorly_trusted_ratios[ratio_index]:
-                        majorly_trusted_misinformation_messages[ratio_index] += 1
-                    elif 1 - upvote_ratio > majorly_trusted_ratios[ratio_index]:
-                        majorly_untrusted_misinformation_messages[ratio_index] += 1
-            else:
-                for ratio_index in range(len(majorly_trusted_ratios)):
-                    if upvote_ratio > majorly_trusted_ratios[ratio_index]:
-                        majorly_trusted_benign_messages[ratio_index] += 1
-                    elif 1 - upvote_ratio > majorly_trusted_ratios[ratio_index]:
-                        majorly_untrusted_benign_messages[ratio_index] += 1
+        # for message_id in range(len(rz_data_holder.message_votes_for_all_messages)):
+        #     if len(rz_data_holder.message_votes_for_all_messages[message_id]) == 0: continue
+        #     upvotes, downvotes = self.count_upvotes_and_downvotes(message_id)
+        #     upvote_ratio = upvotes / (downvotes + upvotes)
+        #     if message_id in rz_data_holder.misinformation_messages_fast_set:
+        #         # misinformation handling
+        #         for ratio_index in range(len(majorly_trusted_ratios)):
+        #             if upvote_ratio > majorly_trusted_ratios[ratio_index]:
+        #                 majorly_trusted_misinformation_messages[ratio_index] += 1
+        #             elif 1 - upvote_ratio > majorly_trusted_ratios[ratio_index]:
+        #                 majorly_untrusted_misinformation_messages[ratio_index] += 1
+        #     else:
+        #         for ratio_index in range(len(majorly_trusted_ratios)):
+        #             if upvote_ratio > majorly_trusted_ratios[ratio_index]:
+        #                 majorly_trusted_benign_messages[ratio_index] += 1
+        #             elif 1 - upvote_ratio > majorly_trusted_ratios[ratio_index]:
+        #                 majorly_untrusted_benign_messages[ratio_index] += 1
 
         total_misinformation_count = sum(rz_data_holder.misinformation_count)
 
-        count_of_majorly_seen_misinformation_messages = 0
-        count_of_majorly_seen_benign_messages = 0
+        majorly_trusted_trust_scores = [0.0, 0.000001, 0.0001, 0.005, 0.01, 0.05 , 0.1]
+        majorly_trusted_benign_messages = [0] * len(majorly_trusted_trust_scores)
+        majorly_untrusted_benign_messages = [0] * len(majorly_trusted_trust_scores)
+        majorly_trusted_misinformation_messages = [0] * len(majorly_trusted_trust_scores)
+        majorly_untrusted_misinformation_messages = [0] * len(majorly_trusted_trust_scores)
         average_trust_score_of_misinformation = 0
         average_trust_score_of_benign = 0
         for message_id in range(len(rz_data_holder.message_trust_scores_for_all_messages)):
-            if len(rz_data_holder.message_trust_scores_for_all_messages[message_id]) > 0.5 * self.number_of_users:
-                if message_id in rz_data_holder.misinformation_messages_fast_set:
-                    count_of_majorly_seen_misinformation_messages += 1
-                    average_trust_score_of_misinformation += sum(rz_data_holder.message_trust_scores_for_all_messages[message_id].values()) / len(rz_data_holder.message_trust_scores_for_all_messages[message_id])
-                else:
-                    count_of_majorly_seen_benign_messages += 1
-                    average_trust_score_of_benign += sum(rz_data_holder.message_trust_scores_for_all_messages[message_id].values()) / len(rz_data_holder.message_trust_scores_for_all_messages[message_id])
+            message_seen_trust_scores = rz_data_holder.message_trust_scores_for_all_messages[message_id]
+            if len(message_seen_trust_scores) == 0: continue
+            new_average_to_sum = sum(message_seen_trust_scores.values()) / len(message_seen_trust_scores)
+            if message_id in rz_data_holder.misinformation_messages_fast_set:
+                average_trust_score_of_misinformation += new_average_to_sum
+                for ratio_index in range(len(majorly_trusted_trust_scores)):
+                    trusted_count = 0
+                    for trust_score in message_seen_trust_scores:
+                        if trust_score > majorly_trusted_trust_scores[ratio_index]:
+                            trusted_count += 1
+                    if trusted_count > (0.5 * self.number_of_users):
+                        majorly_trusted_misinformation_messages[ratio_index] += 1
+                    else:
+                        majorly_untrusted_misinformation_messages[ratio_index] += 1
+            else:
+                average_trust_score_of_benign += new_average_to_sum
+                for ratio_index in range(len(majorly_trusted_trust_scores)):
+                    trusted_count = 0
+                    for trust_score in message_seen_trust_scores:
+                        if trust_score > majorly_trusted_trust_scores[ratio_index]:
+                            trusted_count += 1
+                    if trusted_count > (0.5 * self.number_of_users):
+                        majorly_trusted_benign_messages[ratio_index] += 1
+                    else:
+                        majorly_untrusted_benign_messages[ratio_index] += 1
+
+                    
         average_trust_score_of_misinformation = average_trust_score_of_misinformation / total_misinformation_count
         average_trust_score_of_benign = average_trust_score_of_benign / (Message.ID_COUNTER - total_misinformation_count)
-        ratio_of_majorly_seen_misinformation_messages = count_of_majorly_seen_misinformation_messages / total_misinformation_count
-        ratio_of_majorly_seen_benign_messages = count_of_majorly_seen_benign_messages / (Message.ID_COUNTER - total_misinformation_count)
-
 
         if not os.path.exists('results/'):
             os.makedirs('results/')
@@ -248,12 +268,10 @@ class MeshSim:
 
                 txt_write_to_file += f'=== Rangzen Specific ===\n'
                 txt_write_to_file += f'count of majorly seen misinformation messages:\n'
-                txt_write_to_file += f'misinformation (count, ratio, ts): {count_of_majorly_seen_misinformation_messages}, {ratio_of_majorly_seen_misinformation_messages}, {average_trust_score_of_misinformation}\n'
-                txt_write_to_file += f'benign (count, ratio, tr)        : {count_of_majorly_seen_benign_messages}, {ratio_of_majorly_seen_benign_messages}, {average_trust_score_of_benign}\n\n'
+                txt_write_to_file += f'misinformation, benign average trust score: {average_trust_score_of_misinformation}, {average_trust_score_of_benign}\n\n'
 
-                txt_write_to_file += f'=== new ===\n'
                 txt_write_to_file += f'count of majorly trusted and untrusted messages:\n'
-                txt_write_to_file += f'ratios    : {", ".join(list(map(str, majorly_trusted_ratios)))}\n'
+                txt_write_to_file += f'ratios    : {", ".join(list(map(str, majorly_trusted_trust_scores)))}\n'
                 txt_write_to_file += f'tr-benign : {", ".join(list(map(str, majorly_trusted_benign_messages)))}\n'
                 txt_write_to_file += f'un-benign : {", ".join(list(map(str, majorly_untrusted_benign_messages)))}\n'
                 txt_write_to_file += f'tr-misinf : {", ".join(list(map(str, majorly_trusted_misinformation_messages)))}\n'
