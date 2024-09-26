@@ -256,6 +256,11 @@ class MeshSim:
 
         with open('majorly_trusted_datapointsreal.pkl', 'wb') as file:
             pickle.dump(to_save, file)
+        
+        to_save2 = rz_data_holder.misinformation_messages_fast_set
+
+        with open('misinformation_messages_fast_set.pkl', 'wb') as file:
+            pickle.dump(to_save2, file)
 
         if not os.path.exists('results/'):
             os.makedirs('results/')
