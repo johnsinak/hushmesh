@@ -252,11 +252,9 @@ class MeshSim:
         average_trust_score_of_misinformation = average_trust_score_of_misinformation / total_misinformation_count
         average_trust_score_of_benign = average_trust_score_of_benign / (Message.ID_COUNTER - total_misinformation_count)
 
-        to_save = [majorly_trusted_trust_scores, majorly_trusted_benign_messages, 
-                   majorly_untrusted_benign_messages, majorly_trusted_misinformation_messages, 
-                   majorly_untrusted_misinformation_messages]
+        to_save = rz_data_holder.message_trust_scores_for_all_messages
 
-        with open('majorly_trusted_datapoints.pkl', 'wb') as file:
+        with open('majorly_trusted_datapointsreal.pkl', 'wb') as file:
             pickle.dump(to_save, file)
 
         if not os.path.exists('results/'):
